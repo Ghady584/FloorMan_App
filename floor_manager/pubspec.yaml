@@ -16,7 +16,6 @@ dependencies:
   parse_server_sdk_flutter: ^2.1.0
   font_awesome_flutter: ^9.0.0
   data_table_2: ^2.0.3
-  flutter_slidable: ^0.5.7
   intl: ^0.16.1
   flutter_typeahead: ^2.0.0
   http: ^0.12.2
