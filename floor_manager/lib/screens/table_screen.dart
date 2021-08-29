@@ -1,7 +1,11 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:parse_server_sdk/parse_server_sdk.dart';
 import 'package:data_table_2/data_table_2.dart';
 import '../components/responsive_text.dart';
+import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
 
 class TablePage extends StatefulWidget {
   final int tableNum;
@@ -159,6 +163,64 @@ class _TablePageState extends State<TablePage> {
     }
   }
 
+  var user;
+  void getUser_app(String username) async {
+    var _dio = new Dio();
+    var options = new Options();
+    options.headers = {
+      'Conten-type': 'application/json',
+      'Accept': 'application/json',
+      'X-Parse-Application-Id': 'ExYGOkRIyPwaQWO52Dtz6DPFp0UecekaMU9yaVLE',
+      'X-Parse-Master-Key': 'tViUC9E1rQXU6evqOiB1Ogn5M66SRp7Ug95MN2NO',
+      'X-Parse-REST-API-Key': '6UgE4EoZJ4pTMkzFvD1H5VVzRenZAsoEJ32yy82I'
+    };
+    options.contentType = 'application/json';
+
+    String url = 'https://parseapi.back4app.com/classes/_User';
+
+    Map<String, String> qParams = {
+      'where': '{"username": "$username"}',
+    };
+    var res = await _dio.get(url, options: options, queryParameters: qParams);
+    if (res.statusCode == 200) {
+      setState(() {
+        user = (res.data);
+      });
+    } else {
+      throw "Unable to retrieve posts.";
+    }
+  }
+
+  void tableReady(String seatX) async {
+    var res = await http.post(
+      Uri.parse('https://parseapi.back4app.com/classes/Messages'),
+      headers: {
+        'Content-type': 'application/json',
+        'Accept': 'application/json',
+        'X-Parse-Application-Id': 'ExYGOkRIyPwaQWO52Dtz6DPFp0UecekaMU9yaVLE',
+        'X-Parse-Master-Key': 'tViUC9E1rQXU6evqOiB1Ogn5M66SRp7Ug95MN2NO',
+        'X-Parse-REST-API-Key': '6UgE4EoZJ4pTMkzFvD1H5VVzRenZAsoEJ32yy82I'
+      },
+      body: jsonEncode({
+        'player': {
+          "__type": "Pointer",
+          "className": "_User",
+          "objectId": user['results'][0]['objectId'],
+        },
+        'Message': 'Your Table is ready "$seatX"',
+      }),
+    );
+    if (res.statusCode == 201) {
+      // If the server did return a 201 CREATED response,
+      // then parse the JSON.
+      return jsonDecode(res.body);
+    } else {
+      // If the server did not return a 201 CREATED response,
+      // then throw an exception.
+      throw Exception(res.statusCode);
+    }
+  }
+
   void playersList() async {
     if (opened == true) {
       setState(() {
@@ -262,7 +324,9 @@ class _TablePageState extends State<TablePage> {
         rows: [
           for (var user in users)
             DataRow2(
-              onTap: () {
+              onTap: () async {
+                await getUser_app(user['username']['Name']);
+
                 freeSeats();
                 showDialog(
                   context: context,
@@ -518,8 +582,11 @@ class _TablePageState extends State<TablePage> {
   }
 
   void seatPlayerSeat1(String tableID, String userName, String userID) async {
+    await tableReady('Tabel ' + widget.tableNum.toString() + ' - Seat 1');
+
     var player = ParseObject('registrations')
       ..objectId = userID
+      ..set('Status', seatedObj)
       ..set('seat', 'Tabel ' + widget.tableNum.toString() + ' - Seat 1');
 
     await player.save();
@@ -553,6 +620,7 @@ class _TablePageState extends State<TablePage> {
       ..set('seat_2', userName);
 
     await table.save();
+    await tableReady('Tabel ' + widget.tableNum.toString() + ' - Seat 2');
   }
 
   void openSeat2(String tableID) async {
@@ -576,6 +644,7 @@ class _TablePageState extends State<TablePage> {
       ..set('seat_3', userName);
 
     await table.save();
+    await tableReady('Tabel ' + widget.tableNum.toString() + ' - Seat 3');
   }
 
   void openSeat3(String tableID) async {
@@ -599,6 +668,7 @@ class _TablePageState extends State<TablePage> {
       ..set('seat_4', userName);
 
     await table.save();
+    await tableReady('Tabel ' + widget.tableNum.toString() + ' - Seat 4');
   }
 
   void openSeat4(String tableID) async {
@@ -622,6 +692,7 @@ class _TablePageState extends State<TablePage> {
       ..set('seat_5', userName);
 
     await table.save();
+    await tableReady('Tabel ' + widget.tableNum.toString() + ' - Seat 5');
   }
 
   void openSeat5(String tableID) async {
@@ -645,6 +716,7 @@ class _TablePageState extends State<TablePage> {
       ..set('seat_6', userName);
 
     await table.save();
+    await tableReady('Tabel ' + widget.tableNum.toString() + ' - Seat 6');
   }
 
   void openSeat6(String tableID) async {
@@ -668,6 +740,7 @@ class _TablePageState extends State<TablePage> {
       ..set('seat_7', userName);
 
     await table.save();
+    await tableReady('Tabel ' + widget.tableNum.toString() + ' - Seat 7');
   }
 
   void openSeat7(String tableID) async {
@@ -783,6 +856,9 @@ class _TablePageState extends State<TablePage> {
   void tableSettings() {
     if (opened == true) {
       openSeats();
+      setState(() {
+        tableSeat = null;
+      });
       showDialog(
         context: context,
         builder: (BuildContext context) {
@@ -1287,7 +1363,8 @@ class _TablePageState extends State<TablePage> {
     QueryBuilder<ParseObject> query = QueryBuilder<ParseObject>(
         ParseObject('registrations'))
       ..includeObject(['username', 'Status'])
-      ..whereEqualTo('game', game)
+      ..whereContainedIn('game', [game, '(Table change)'])
+      // ..whereEqualTo('game', game)
       ..whereGreaterThan('registration_time', dateTodaySt)
       ..whereLessThan("registration_time", dateTodayEn.add(Duration(days: 1)));
 

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:floor_manager/components/empty_content.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
@@ -6,6 +8,8 @@ import 'package:data_table_2/data_table_2.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../components/responsive_text.dart';
 import 'package:intl/intl.dart';
+import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
 
 class RegistrationList extends StatefulWidget {
   const RegistrationList({Key key}) : super(key: key);
@@ -206,6 +210,101 @@ class _RegistrationList extends State<RegistrationList> {
         ..set('check_in_time', DateTime.now());
 
       await customer.save();
+    }
+  }
+
+  var user;
+
+  void getUser_app(String nama) async {
+    var _dio = new Dio();
+    var options = new Options(
+      followRedirects: false,
+      // will not throw errors
+      validateStatus: (status) => true,
+    );
+    options.headers = {
+      'Conten-type': 'application/json',
+      'Accept': 'application/json',
+      'X-Parse-Application-Id': 'ExYGOkRIyPwaQWO52Dtz6DPFp0UecekaMU9yaVLE',
+      'X-Parse-Master-Key': 'tViUC9E1rQXU6evqOiB1Ogn5M66SRp7Ug95MN2NO',
+      'X-Parse-REST-API-Key': '6UgE4EoZJ4pTMkzFvD1H5VVzRenZAsoEJ32yy82I'
+    };
+    options.contentType = 'application/json';
+
+    String url = 'https://parseapi.back4app.com/classes/_User';
+
+    Map<String, String> qParams = {
+      'where': '{"username": "$nama"}',
+    };
+    var res = await _dio.get(url, options: options, queryParameters: qParams);
+    if (res.statusCode == 200) {
+      setState(() {
+        user = (res.data);
+      });
+      print(user);
+    } else {
+      throw "Unable to retrieve posts.";
+    }
+  }
+
+  void checkPlayerIn() async {
+    var res = await http.post(
+      Uri.parse('https://parseapi.back4app.com/classes/Messages'),
+      headers: {
+        'Content-type': 'application/json',
+        'Accept': 'application/json',
+        'X-Parse-Application-Id': 'ExYGOkRIyPwaQWO52Dtz6DPFp0UecekaMU9yaVLE',
+        'X-Parse-Master-Key': 'tViUC9E1rQXU6evqOiB1Ogn5M66SRp7Ug95MN2NO',
+        'X-Parse-REST-API-Key': '6UgE4EoZJ4pTMkzFvD1H5VVzRenZAsoEJ32yy82I'
+      },
+      body: jsonEncode({
+        'player': {
+          "__type": "Pointer",
+          "className": "_User",
+          "objectId": user['results'][0]['objectId'],
+        },
+        'Message': 'You Have been checked in',
+      }),
+    );
+    if (res.statusCode == 201) {
+      // If the server did return a 201 CREATED response,
+      // then parse the JSON.
+      return jsonDecode(res.body);
+    } else {
+      // If the server did not return a 201 CREATED response,
+      // then throw an exception.
+      throw Exception(res.statusCode);
+    }
+  }
+
+  startDinner() async {
+    var res = await http.post(
+      Uri.parse('https://parseapi.back4app.com/classes/Messages'),
+      headers: {
+        'Content-type': 'application/json',
+        'Accept': 'application/json',
+        'X-Parse-Application-Id': 'ExYGOkRIyPwaQWO52Dtz6DPFp0UecekaMU9yaVLE',
+        'X-Parse-Master-Key': 'tViUC9E1rQXU6evqOiB1Ogn5M66SRp7Ug95MN2NO',
+        'X-Parse-REST-API-Key': '6UgE4EoZJ4pTMkzFvD1H5VVzRenZAsoEJ32yy82I'
+      },
+      body: jsonEncode({
+        'player': {
+          "__type": "Pointer",
+          "className": "_User",
+          "objectId": user['results'][0]['objectId'],
+        },
+        'Message':
+            'Your Dinner Break has started please be back at your seat in 30 minuts',
+      }),
+    );
+    if (res.statusCode == 201) {
+      // If the server did return a 201 CREATED response,
+      // then parse the JSON.
+      return jsonDecode(res.body);
+    } else {
+      // If the server did not return a 201 CREATED response,
+      // then throw an exception.
+      throw Exception(res.statusCode);
     }
   }
 
@@ -997,7 +1096,9 @@ class _RegistrationList extends State<RegistrationList> {
             rows: [
               for (var user in users)
                 DataRow2(
-                  onTap: () {
+                  onTap: () async {
+                    print(user['username']['Name']);
+                    await getUser_app(user['username']['Name']);
                     setState(() {
                       game = user['game'];
                       type = user['type'];
@@ -1214,6 +1315,16 @@ class _RegistrationList extends State<RegistrationList> {
                                   RaisedButton(
                                     color: Colors.green[800],
                                     child: Text(
+                                      "Start Dinner Break",
+                                    ),
+                                    onPressed: () async {
+                                      await startDinner();
+                                      Navigator.pop(context);
+                                    },
+                                  ),
+                                  RaisedButton(
+                                    color: Colors.green[800],
+                                    child: Text(
                                       "Cancel registration",
                                     ),
                                     onPressed: () {
@@ -1297,6 +1408,7 @@ class _RegistrationList extends State<RegistrationList> {
                                     ),
                                     onPressed: () {
                                       playerCheckIn(user['objectId']);
+                                      checkPlayerIn();
 
                                       Navigator.pop(context);
                                     },
