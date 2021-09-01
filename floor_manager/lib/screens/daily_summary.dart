@@ -473,8 +473,9 @@ class _Daily_SummaryState extends State<Daily_Summary> {
                                 )
                               ],
                             ),
-                            RaisedButton(
-                              color: Colors.green[800],
+                            TextButton(
+                              style: TextButton.styleFrom(
+                                  backgroundColor: Colors.green[800]),
                               child: Text(
                                 "Apply Changes",
                               ),
@@ -491,8 +492,9 @@ class _Daily_SummaryState extends State<Daily_Summary> {
                                 controllerTax1.clear();
                               },
                             ),
-                            RaisedButton(
-                              color: Colors.green[800],
+                            TextButton(
+                              style: TextButton.styleFrom(
+                                  backgroundColor: Colors.green[800]),
                               child: Text(
                                 "Delete",
                               ),

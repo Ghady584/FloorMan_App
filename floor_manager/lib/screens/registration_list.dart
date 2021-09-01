@@ -816,8 +816,9 @@ class _RegistrationList extends State<RegistrationList> {
                     ),
                   ),
                   actions: [
-                    RaisedButton(
-                      color: Colors.green[800],
+                    TextButton(
+                      style: TextButton.styleFrom(
+                          backgroundColor: Colors.green[800]),
                       child: Text("Submit"),
                       onPressed: () {
                         playerCreate(_usernameController.text, game,
@@ -1042,8 +1043,9 @@ class _RegistrationList extends State<RegistrationList> {
                 ),
                 Padding(
                   padding: const EdgeInsets.all(32.0),
-                  child: RaisedButton(
-                    color: Colors.green[800],
+                  child: TextButton(
+                    style: TextButton.styleFrom(
+                        backgroundColor: Colors.green[800]),
                     onPressed: () {
                       Navigator.pop(context);
 
@@ -1312,8 +1314,9 @@ class _RegistrationList extends State<RegistrationList> {
                                       )
                                     ],
                                   ),
-                                  RaisedButton(
-                                    color: Colors.green[800],
+                                  TextButton(
+                                    style: TextButton.styleFrom(
+                                        backgroundColor: Colors.green[800]),
                                     child: Text(
                                       "Start Dinner Break",
                                     ),
@@ -1322,8 +1325,9 @@ class _RegistrationList extends State<RegistrationList> {
                                       Navigator.pop(context);
                                     },
                                   ),
-                                  RaisedButton(
-                                    color: Colors.green[800],
+                                  TextButton(
+                                    style: TextButton.styleFrom(
+                                        backgroundColor: Colors.green[800]),
                                     child: Text(
                                       "Cancel registration",
                                     ),
@@ -1382,8 +1386,10 @@ class _RegistrationList extends State<RegistrationList> {
                                               ),
                                             ),
                                             actions: [
-                                              RaisedButton(
-                                                color: Colors.green[800],
+                                              TextButton(
+                                                style: TextButton.styleFrom(
+                                                    backgroundColor:
+                                                        Colors.green[800]),
                                                 child: Text(
                                                   "Submit",
                                                 ),
@@ -1401,8 +1407,9 @@ class _RegistrationList extends State<RegistrationList> {
                                       );
                                     },
                                   ),
-                                  RaisedButton(
-                                    color: Colors.green[800],
+                                  TextButton(
+                                    style: TextButton.styleFrom(
+                                        backgroundColor: Colors.green[800]),
                                     child: Text(
                                       "Check-In Player",
                                     ),
@@ -1413,8 +1420,9 @@ class _RegistrationList extends State<RegistrationList> {
                                       Navigator.pop(context);
                                     },
                                   ),
-                                  RaisedButton(
-                                    color: Colors.green[800],
+                                  TextButton(
+                                    style: TextButton.styleFrom(
+                                        backgroundColor: Colors.green[800]),
                                     child: Text(
                                       "Apply Changes To Registration",
                                     ),
@@ -1632,8 +1640,9 @@ class _RegistrationList extends State<RegistrationList> {
                       ),
                     ),
                     actions: [
-                      RaisedButton(
-                        color: Colors.green[800],
+                      TextButton(
+                        style: TextButton.styleFrom(
+                            backgroundColor: Colors.green[800]),
                         child: Text("Submit"),
                         onPressed: () {
                           playerCreate(_usernameController.text, game,

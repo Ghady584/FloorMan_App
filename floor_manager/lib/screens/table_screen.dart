@@ -17,7 +17,7 @@ class TablePage extends StatefulWidget {
 }
 
 class _TablePageState extends State<TablePage> {
-  ParseUser _authUser;
+  // ParseUser _authUser;
   var users = [];
   List st = ['Pending', 'Checked-In'];
 
@@ -128,8 +128,8 @@ class _TablePageState extends State<TablePage> {
 
   Widget wButton() {
     if (opened == true) {
-      return RaisedButton(
-        color: Colors.green[800],
+      return TextButton(
+        style: TextButton.styleFrom(backgroundColor: Colors.green[800]),
         child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Text(
@@ -144,12 +144,13 @@ class _TablePageState extends State<TablePage> {
         },
       );
     } else {
-      return RaisedButton(
+      return TextButton(
+        style: TextButton.styleFrom(
+          backgroundColor: Colors.green[800],
+        ),
         onPressed: () {
           openTableButton();
         },
-        disabledColor: Colors.grey,
-        color: Colors.green[800],
         child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Text(
@@ -365,8 +366,9 @@ class _TablePageState extends State<TablePage> {
                         ),
                       ),
                       actions: [
-                        RaisedButton(
-                          color: Colors.green[800],
+                        TextButton(
+                          style: TextButton.styleFrom(
+                              backgroundColor: Colors.green[800]),
                           child: Text("Submit"),
                           onPressed: () {
                             switch (tableSeat) {
@@ -953,8 +955,8 @@ class _TablePageState extends State<TablePage> {
               ),
             ),
             actions: [
-              RaisedButton(
-                color: Colors.green[800],
+              TextButton(
+                style: TextButton.styleFrom(backgroundColor: Colors.green[800]),
                 child: Text("Submit"),
                 onPressed: () {
                   setState(
@@ -1055,12 +1057,14 @@ class _TablePageState extends State<TablePage> {
       print(response.error);
     }
 
-    await liveQueryTable.subscribe(queryPost);
+    Subscription subscription =
+        await liveQueryTable.client.subscribe(queryPost);
+
     if (opened == true) {
       liveQuery();
     }
 
-    liveQueryTable.on(LiveQueryEvent.create, (value) async {
+    subscription.on(LiveQueryEvent.create, (value) async {
       print('*** CREATE ***: ${DateTime.now().toString()}\n $value ');
       print((value as ParseObject).objectId);
       print((value as ParseObject).updatedAt);
@@ -1068,12 +1072,11 @@ class _TablePageState extends State<TablePage> {
       print((value as ParseObject).get('objectId'));
       print((value as ParseObject).get('updatedAt'));
       print((value as ParseObject).get('createdAt'));
-      var response = await queryPost.query();
 
       checkTable();
     });
 
-    liveQueryTable.on(LiveQueryEvent.update, (value) async {
+    subscription.on(LiveQueryEvent.update, (value) async {
       print('*** UPDATE ***: ${DateTime.now().toString()}\n $value ');
       print((value as ParseObject).objectId);
       print((value as ParseObject).updatedAt);
@@ -1081,12 +1084,11 @@ class _TablePageState extends State<TablePage> {
       print((value as ParseObject).get('objectId'));
       print((value as ParseObject).get('updatedAt'));
       print((value as ParseObject).get('createdAt'));
-      var response = await queryPost.query();
 
       checkTable();
     });
 
-    liveQueryTable.on(LiveQueryEvent.enter, (value) async {
+    subscription.on(LiveQueryEvent.enter, (value) async {
       print('*** ENTER ***: ${DateTime.now().toString()}\n $value ');
       print((value as ParseObject).objectId);
       print((value as ParseObject).updatedAt);
@@ -1094,12 +1096,11 @@ class _TablePageState extends State<TablePage> {
       print((value as ParseObject).get('objectId'));
       print((value as ParseObject).get('updatedAt'));
       print((value as ParseObject).get('createdAt'));
-      var response = await queryPost.query();
 
       checkTable();
     });
 
-    liveQueryTable.on(LiveQueryEvent.leave, (value) async {
+    subscription.on(LiveQueryEvent.leave, (value) async {
       print('*** LEAVE ***: ${DateTime.now().toString()}\n $value ');
       print((value as ParseObject).objectId);
       print((value as ParseObject).updatedAt);
@@ -1107,12 +1108,11 @@ class _TablePageState extends State<TablePage> {
       print((value as ParseObject).get('objectId'));
       print((value as ParseObject).get('updatedAt'));
       print((value as ParseObject).get('createdAt'));
-      var response = await queryPost.query();
 
       checkTable();
     });
 
-    liveQueryTable.on(LiveQueryEvent.delete, (value) async {
+    subscription.on(LiveQueryEvent.delete, (value) async {
       print('*** DELETE ***: ${DateTime.now().toString()}\n $value ');
       print((value as ParseObject).objectId);
       print((value as ParseObject).updatedAt);
@@ -1120,7 +1120,6 @@ class _TablePageState extends State<TablePage> {
       print((value as ParseObject).get('objectId'));
       print((value as ParseObject).get('updatedAt'));
       print((value as ParseObject).get('createdAt'));
-      var response = await queryPost.query();
 
       checkTable();
     });
@@ -1220,8 +1219,9 @@ class _TablePageState extends State<TablePage> {
               child: Form(
                 child: Column(
                   children: <Widget>[
-                    RaisedButton(
-                      color: Colors.green[800],
+                    TextButton(
+                      style: TextButton.styleFrom(
+                          backgroundColor: Colors.green[800]),
                       child: Text(
                         "With players continue (High Card)",
                         style: TextStyle(color: Colors.white, fontSize: 14),
@@ -1236,8 +1236,9 @@ class _TablePageState extends State<TablePage> {
                         Navigator.pop(context);
                       },
                     ),
-                    RaisedButton(
-                      color: Colors.green[800],
+                    TextButton(
+                      style: TextButton.styleFrom(
+                          backgroundColor: Colors.green[800]),
                       child: Text(
                         "      Without players continue      ",
                         style: TextStyle(color: Colors.white, fontSize: 15),
@@ -1332,8 +1333,8 @@ class _TablePageState extends State<TablePage> {
               ),
             ),
             actions: [
-              RaisedButton(
-                color: Colors.green[800],
+              TextButton(
+                style: TextButton.styleFrom(backgroundColor: Colors.green[800]),
                 child: Text("Submit"),
                 onPressed: () {
                   openTable(table_ID);
@@ -1369,7 +1370,7 @@ class _TablePageState extends State<TablePage> {
       ..whereLessThan("registration_time", dateTodayEn.add(Duration(days: 1)));
 
     var response = await query.query();
-    await liveQuery.subscribe(query);
+    Subscription subscription = await liveQuery.client.subscribe(query);
 
     if (response.success) {
       setState(
@@ -1384,7 +1385,7 @@ class _TablePageState extends State<TablePage> {
       print(response.error);
     }
 
-    liveQuery.on(LiveQueryEvent.create, (value) async {
+    subscription.on(LiveQueryEvent.create, (value) async {
       print('*** CREATE ***: ${DateTime.now().toString()}\n $value ');
       print((value as ParseObject).objectId);
       print((value as ParseObject).updatedAt);
@@ -1397,7 +1398,7 @@ class _TablePageState extends State<TablePage> {
       switchFavorite();
     });
 
-    liveQuery.on(LiveQueryEvent.update, (value) async {
+    subscription.on(LiveQueryEvent.update, (value) async {
       print('*** UPDATE ***: ${DateTime.now().toString()}\n $value ');
       print((value as ParseObject).objectId);
       print((value as ParseObject).updatedAt);
@@ -1410,7 +1411,7 @@ class _TablePageState extends State<TablePage> {
       switchFavorite();
     });
 
-    liveQuery.on(LiveQueryEvent.enter, (value) async {
+    subscription.on(LiveQueryEvent.enter, (value) async {
       print('*** ENTER ***: ${DateTime.now().toString()}\n $value ');
       print((value as ParseObject).objectId);
       print((value as ParseObject).updatedAt);
@@ -1423,7 +1424,7 @@ class _TablePageState extends State<TablePage> {
       switchFavorite();
     });
 
-    liveQuery.on(LiveQueryEvent.leave, (value) async {
+    subscription.on(LiveQueryEvent.leave, (value) async {
       print('*** LEAVE ***: ${DateTime.now().toString()}\n $value ');
       print((value as ParseObject).objectId);
       print((value as ParseObject).updatedAt);
@@ -1436,7 +1437,7 @@ class _TablePageState extends State<TablePage> {
       switchFavorite();
     });
 
-    liveQuery.on(LiveQueryEvent.delete, (value) async {
+    subscription.on(LiveQueryEvent.delete, (value) async {
       print('*** DELETE ***: ${DateTime.now().toString()}\n $value ');
       print((value as ParseObject).objectId);
       print((value as ParseObject).updatedAt);
@@ -1494,8 +1495,9 @@ class _TablePageState extends State<TablePage> {
                   child: ListView(
                     children: [
                       wButton(),
-                      RaisedButton(
-                        color: Colors.green[800],
+                      TextButton(
+                        style: TextButton.styleFrom(
+                            backgroundColor: Colors.green[800]),
                         child: Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: Text(

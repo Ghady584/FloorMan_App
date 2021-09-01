@@ -142,8 +142,9 @@ class _LoginPageState extends State<LoginPage> {
                 SizedBox(
                   height: 16,
                 ),
-                FlatButton(
-                  color: Colors.green[800],
+                TextButton(
+                  style:
+                      TextButton.styleFrom(backgroundColor: Colors.green[800]),
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Text(

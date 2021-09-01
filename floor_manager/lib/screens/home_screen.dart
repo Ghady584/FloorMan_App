@@ -175,8 +175,9 @@ class _HomePageState extends State<HomePage> {
                       ),
                       Container(
                         height: 50,
-                        child: RaisedButton(
-                          color: Colors.green[800],
+                        child: TextButton(
+                          style: TextButton.styleFrom(
+                              backgroundColor: Colors.green[800]),
                           child: Padding(
                             padding: const EdgeInsets.all(8.0),
                             child: Text(
@@ -329,8 +330,9 @@ class _HomePageState extends State<HomePage> {
                       ),
                       Container(
                         height: 50,
-                        child: RaisedButton(
-                          color: Colors.green[800],
+                        child: TextButton(
+                          style: TextButton.styleFrom(
+                              backgroundColor: Colors.green[800]),
                           child: Padding(
                             padding: const EdgeInsets.all(8.0),
                             child: Text(
