@@ -1,4 +1,5 @@
 import 'package:floor_manager/screens/casino_layout.dart';
+import 'package:floor_manager/screens/casino_layout_alt.dart';
 import 'package:flutter/material.dart';
 import 'package:parse_server_sdk_flutter/parse_server_sdk.dart';
 import '../main.dart';
@@ -119,7 +120,7 @@ class _HomePageState extends State<HomePage> {
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) {
-                                          return CasinoLayOut();
+                                          return CasinoLayOutAlt();
                                         },
                                       ),
                                     );
