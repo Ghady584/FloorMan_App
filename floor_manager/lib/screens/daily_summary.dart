@@ -167,11 +167,17 @@ class _Daily_SummaryState extends State<Daily_Summary> {
     var response = await queryPost.query();
 
     if (response.success) {
-      setState(
-        () {
-          tables = response.results;
-        },
-      );
+      if (response.results == null) {
+        setState(() {
+          tables = [''];
+        });
+      } else {
+        setState(
+          () {
+            tables = response.results;
+          },
+        );
+      }
     } else {
       print(response.error);
     }

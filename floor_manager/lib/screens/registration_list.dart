@@ -39,7 +39,7 @@ class _RegistrationList extends State<RegistrationList> {
 
   var gamesList;
   String username;
-  final List games = ['(Table change)'];
+  final List games = ['(Table change)', '(Dinner Break Request)'];
 
   String game;
 
@@ -409,8 +409,8 @@ class _RegistrationList extends State<RegistrationList> {
   }
 
   void filter() async {
-    await refreshAll();
-    await setDate();
+    refreshAll();
+    setDate();
     if (users == null) {
       null;
     } else {

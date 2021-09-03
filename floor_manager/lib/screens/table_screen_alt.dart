@@ -1,10 +1,13 @@
 import 'dart:convert';
 import 'dart:developer';
+import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
 
 import 'package:floor_manager/paints/chair.dart';
 import 'package:floor_manager/paints/table.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:parse_server_sdk/parse_server_sdk.dart';
 
 class TableScreenAlt extends StatefulWidget {
   var tableData;
@@ -17,11 +20,467 @@ class TableScreenAlt extends StatefulWidget {
 class _TableScreenAltState extends State<TableScreenAlt> {
   List _chairs = [];
 
+  DateTime dateTodaySt;
+  DateTime dateTodayEn;
+  DateTime now = DateTime.now();
+  var users = [];
+  String game;
+  String tableType;
+  final List tableTypes = ['Main Table', 'Regular Table'];
+  final List games = ['NLH 5/10', 'NLH 2/4', 'PLO 5/10', 'PLO 10/10'];
+
+  void switchFavorite() {
+    for (var user in users)
+      if (user['favorite'] == true) {
+        user['favorite'] = '❤';
+      } else {
+        user['favorite'] = " ";
+      }
+  }
+
+  void changeTable(String tableID) async {
+    var table = ParseObject('Tables')
+      ..objectId = tableID
+      ..set('game', game)
+      ..set('table_type', tableType);
+
+    await table.save();
+    switchFavorite();
+  }
+
+  var user;
+  void getUser_app(String username) async {
+    var _dio = new Dio();
+    var options = new Options();
+    options.headers = {
+      'Conten-type': 'application/json',
+      'Accept': 'application/json',
+      'X-Parse-Application-Id': 'ExYGOkRIyPwaQWO52Dtz6DPFp0UecekaMU9yaVLE',
+      'X-Parse-Master-Key': 'tViUC9E1rQXU6evqOiB1Ogn5M66SRp7Ug95MN2NO',
+      'X-Parse-REST-API-Key': '6UgE4EoZJ4pTMkzFvD1H5VVzRenZAsoEJ32yy82I'
+    };
+    options.contentType = 'application/json';
+
+    String url = 'https://parseapi.back4app.com/classes/_User';
+
+    Map<String, String> qParams = {
+      'where': '{"username": "$username"}',
+    };
+    var res = await _dio.get(url, options: options, queryParameters: qParams);
+    if (res.statusCode == 200) {
+      setState(() {
+        user = (res.data);
+      });
+    } else {
+      throw "Unable to retrieve posts.";
+    }
+  }
+
+  void tableReady(String seatX) async {
+    var res = await http.post(
+      Uri.parse('https://parseapi.back4app.com/classes/Messages'),
+      headers: {
+        'Content-type': 'application/json',
+        'Accept': 'application/json',
+        'X-Parse-Application-Id': 'ExYGOkRIyPwaQWO52Dtz6DPFp0UecekaMU9yaVLE',
+        'X-Parse-Master-Key': 'tViUC9E1rQXU6evqOiB1Ogn5M66SRp7Ug95MN2NO',
+        'X-Parse-REST-API-Key': '6UgE4EoZJ4pTMkzFvD1H5VVzRenZAsoEJ32yy82I'
+      },
+      body: jsonEncode({
+        'player': {
+          "__type": "Pointer",
+          "className": "_User",
+          "objectId": user['results'][0]['objectId'],
+        },
+        'Message': 'Your Table is ready "$seatX"',
+      }),
+    );
+    if (res.statusCode == 201) {
+      // If the server did return a 201 CREATED response,
+      // then parse the JSON.
+      return jsonDecode(res.body);
+    } else {
+      // If the server did not return a 201 CREATED response,
+      // then throw an exception.
+      throw Exception(res.statusCode);
+    }
+  }
+
+  void closeTable(String tableID) async {
+    var table = ParseObject('Tables')
+      ..objectId = tableID
+      ..set('game', '')
+      ..set('opened', false)
+      ..set('table_type', '')
+      ..set('seat_1', '')
+      ..set('seat_2', '')
+      ..set('seat_3', '')
+      ..set('seat_4', '')
+      ..set('seat_5', '')
+      ..set('seat_6', '')
+      ..set('seat_7', '');
+
+    await table.save();
+  }
+
+  var seatedObj;
+  getSeatedObj() async {
+    QueryBuilder<ParseObject> queryPost =
+        QueryBuilder<ParseObject>(ParseObject('States'))
+          ..whereEqualTo('state', 'Seated');
+
+    var response = await queryPost.query();
+    for (var item in response.results) {
+      setState(() {
+        seatedObj = item;
+      });
+    }
+  }
+
+  void seatPlayer(
+      String tableID, String userName, String userID, String chairName) async {
+    await getUser_app(userName);
+
+    var player = ParseObject('registrations')
+      ..objectId = userID
+      ..set('Status', seatedObj)
+      ..set(
+          'seat',
+          'Tabel ' +
+              widget.tableData['table_num'].toString() +
+              " " +
+              chairName);
+
+    await player.save();
+    switch (chairName) {
+      case 'Chair 1':
+        var table = ParseObject('Tables')
+          ..objectId = tableID
+          ..set('seat_1', userName);
+
+        await table.save();
+        await tableReady(
+            'Tabel ' + widget.tableData['table_num'].toString() + ' - Seat 1');
+
+        break;
+      case 'Chair 2':
+        var table = ParseObject('Tables')
+          ..objectId = tableID
+          ..set('seat_2', userName);
+
+        await table.save();
+        await tableReady(
+            'Tabel ' + widget.tableData['table_num'].toString() + ' - Seat 2');
+
+        break;
+      case 'Chair 3':
+        var table = ParseObject('Tables')
+          ..objectId = tableID
+          ..set('seat_3', userName);
+
+        await table.save();
+        await tableReady(
+            'Tabel ' + widget.tableData['table_num'].toString() + ' - Seat 3');
+
+        break;
+      case 'Chair 4':
+        var table = ParseObject('Tables')
+          ..objectId = tableID
+          ..set('seat_4', userName);
+
+        await table.save();
+        await tableReady(
+            'Tabel ' + widget.tableData['table_num'].toString() + ' - Seat 4');
+
+        break;
+      case 'Chair 5':
+        var table = ParseObject('Tables')
+          ..objectId = tableID
+          ..set('seat_5', userName);
+
+        await table.save();
+        await tableReady(
+            'Tabel ' + widget.tableData['table_num'].toString() + ' - Seat 5');
+
+        break;
+      case 'Chair 6':
+        var table = ParseObject('Tables')
+          ..objectId = tableID
+          ..set('seat_6', userName);
+
+        await table.save();
+        await tableReady(
+            'Tabel ' + widget.tableData['table_num'].toString() + ' - Seat 6');
+
+        break;
+      case 'Chair 7':
+        var table = ParseObject('Tables')
+          ..objectId = tableID
+          ..set('seat_7', userName);
+
+        await table.save();
+        await tableReady(
+            'Tabel ' + widget.tableData['table_num'].toString() + ' - Seat 7');
+
+        break;
+      case 'Chair 8':
+        var table = ParseObject('Tables')
+          ..objectId = tableID
+          ..set('seat_8', userName);
+
+        await table.save();
+        await tableReady(
+            'Tabel ' + widget.tableData['table_num'].toString() + ' - Seat 8');
+
+        break;
+      case 'Chair 9':
+        var table = ParseObject('Tables')
+          ..objectId = tableID
+          ..set('seat_9', userName);
+
+        await table.save();
+        await tableReady(
+            'Tabel ' + widget.tableData['table_num'].toString() + ' - Seat 9');
+
+        break;
+      case 'Chair 10':
+        var table = ParseObject('Tables')
+          ..objectId = tableID
+          ..set('seat_10', userName);
+
+        await table.save();
+        await tableReady(
+            'Tabel ' + widget.tableData['table_num'].toString() + ' - Seat 10');
+
+        break;
+    }
+  }
+
+  void setupTable() {
+    for (var chair in _chairs) {
+      if (chair['name'] == "Chair 1") {
+        if (widget.tableData['seat_1'] != '') {
+          setState(() {
+            chair['user'] = widget.tableData['seat_1'];
+          });
+        }
+      }
+      if (chair['name'] == "Chair 2") {
+        if (widget.tableData['seat_2'] != '') {
+          setState(() {
+            chair['user'] = widget.tableData['seat_2'];
+          });
+        }
+      }
+      if (chair['name'] == "Chair 3") {
+        if (widget.tableData['seat_3'] != '') {
+          setState(() {
+            chair['user'] = widget.tableData['seat_3'];
+          });
+        }
+      }
+      if (chair['name'] == "Chair 4") {
+        if (widget.tableData['seat_4'] != '') {
+          setState(() {
+            chair['user'] = widget.tableData['seat_4'];
+          });
+        }
+      }
+      if (chair['name'] == "Chair 5") {
+        if (widget.tableData['seat_5'] != '') {
+          setState(() {
+            chair['user'] = widget.tableData['seat_5'];
+          });
+        }
+      }
+      if (chair['name'] == "Chair 6") {
+        if (widget.tableData['seat_6'] != '') {
+          setState(() {
+            chair['user'] = widget.tableData['seat_6'];
+          });
+        }
+      }
+      if (chair['name'] == "Chair 7") {
+        if (widget.tableData['seat_7'] != '') {
+          setState(() {
+            chair['user'] = widget.tableData['seat_7'];
+          });
+        }
+      }
+      if (chair['name'] == "Chair 8") {
+        if (widget.tableData['seat_8'] != '') {
+          setState(() {
+            chair['user'] = widget.tableData['seat_8'];
+          });
+        }
+      }
+      if (chair['name'] == "Chair 9") {
+        if (widget.tableData['seat_9'] != '') {
+          setState(() {
+            chair['user'] = widget.tableData['seat_9'];
+          });
+        }
+      }
+      if (chair['name'] == "Chair 10") {
+        if (widget.tableData['seat_10'] != '') {
+          setState(() {
+            chair['user'] = widget.tableData['seat_10'];
+          });
+        }
+      }
+    }
+  }
+
+  liveQuery() async {
+    final LiveQuery liveQuery = LiveQuery();
+    setState(() {
+      dateTodaySt = DateTime(now.year, now.month, now.day, 9);
+      dateTodayEn = DateTime(now.year, now.month, now.day, 14);
+    });
+
+    QueryBuilder<ParseObject> query = QueryBuilder<ParseObject>(
+        ParseObject('registrations'))
+      ..includeObject(['username', 'Status'])
+      ..whereContainedIn('game', [widget.tableData['game'], '(Table change)'])
+      // ..whereEqualTo('game', game)
+      ..whereGreaterThan('registration_time', dateTodaySt)
+      ..whereLessThan("registration_time", dateTodayEn.add(Duration(days: 1)));
+
+    var response = await query.query();
+    Subscription subscription = await liveQuery.client.subscribe(query);
+
+    if (response.success) {
+      setState(
+        () {
+          users = response.results;
+          users.removeWhere((user) => user['Status']['state'] == 'Seated');
+          users.removeWhere((user) => user['Status']['state'] == 'Cancelled');
+        },
+      );
+      if (mounted) {
+        switchFavorite();
+      }
+    } else {
+      print(response.error);
+    }
+
+    subscription.on(LiveQueryEvent.create, (value) async {
+      print('*** CREATE ***: ${DateTime.now().toString()}\n $value ');
+      print((value as ParseObject).objectId);
+      print((value as ParseObject).updatedAt);
+      print((value as ParseObject).createdAt);
+      print((value as ParseObject).get('objectId'));
+      print((value as ParseObject).get('updatedAt'));
+      print((value as ParseObject).get('createdAt'));
+
+      if (mounted) {
+        switchFavorite();
+        playersList(widget.tableData['game']);
+      }
+    });
+
+    subscription.on(LiveQueryEvent.update, (value) async {
+      print('*** UPDATE ***: ${DateTime.now().toString()}\n $value ');
+      print((value as ParseObject).objectId);
+      print((value as ParseObject).updatedAt);
+      print((value as ParseObject).createdAt);
+      print((value as ParseObject).get('objectId'));
+      print((value as ParseObject).get('updatedAt'));
+      print((value as ParseObject).get('createdAt'));
+
+      if (mounted) {
+        switchFavorite();
+        playersList(widget.tableData['game']);
+      }
+    });
+
+    subscription.on(LiveQueryEvent.enter, (value) async {
+      print('*** ENTER ***: ${DateTime.now().toString()}\n $value ');
+      print((value as ParseObject).objectId);
+      print((value as ParseObject).updatedAt);
+      print((value as ParseObject).createdAt);
+      print((value as ParseObject).get('objectId'));
+      print((value as ParseObject).get('updatedAt'));
+      print((value as ParseObject).get('createdAt'));
+
+      if (mounted) {
+        switchFavorite();
+        playersList(widget.tableData['game']);
+      }
+    });
+
+    subscription.on(LiveQueryEvent.leave, (value) async {
+      print('*** LEAVE ***: ${DateTime.now().toString()}\n $value ');
+      print((value as ParseObject).objectId);
+      print((value as ParseObject).updatedAt);
+      print((value as ParseObject).createdAt);
+      print((value as ParseObject).get('objectId'));
+      print((value as ParseObject).get('updatedAt'));
+      print((value as ParseObject).get('createdAt'));
+
+      if (mounted) {
+        switchFavorite();
+        playersList(widget.tableData['game']);
+      }
+    });
+
+    subscription.on(LiveQueryEvent.delete, (value) async {
+      print('*** DELETE ***: ${DateTime.now().toString()}\n $value ');
+      print((value as ParseObject).objectId);
+      print((value as ParseObject).updatedAt);
+      print((value as ParseObject).createdAt);
+      print((value as ParseObject).get('objectId'));
+      print((value as ParseObject).get('updatedAt'));
+      print((value as ParseObject).get('createdAt'));
+
+      if (mounted) {
+        switchFavorite();
+        playersList(widget.tableData['game']);
+      }
+    });
+  }
+
+  void playersList(String game) async {
+    setState(() {
+      dateTodaySt = DateTime(now.year, now.month, now.day, 9);
+      dateTodayEn = DateTime(now.year, now.month, now.day, 14);
+    });
+
+    QueryBuilder<ParseObject> queryPost = QueryBuilder<ParseObject>(
+        ParseObject('registrations'))
+      //  ..whereContainedIn('status', st)
+      ..whereContainedIn('game', [widget.tableData['game'], '(Table change)'])
+      ..includeObject(['username', 'Status'])
+      ..whereGreaterThan('registration_time', dateTodaySt)
+      ..whereLessThan("registration_time", dateTodayEn.add(Duration(days: 1)));
+
+    var response = await queryPost.query();
+    if (mounted) {
+      if (response.success) {
+        setState(
+          () {
+            users = response.results;
+            users.removeWhere((user) => user['Status']['state'] == 'Seated');
+            users.removeWhere((user) => user['Status']['state'] == 'Cancelled');
+          },
+        );
+        await setupTable();
+
+        switchFavorite();
+      } else {
+        print(response.error);
+      }
+    }
+  }
+
   @override
   void initState() {
     super.initState();
+    playersList(widget.tableData['game']);
+    liveQuery();
     this.readJson();
     log(_chairs.toString());
+    getSeatedObj();
   }
 
   Future<void> readJson() async {
@@ -39,7 +498,7 @@ class _TableScreenAltState extends State<TableScreenAlt> {
     var width = MediaQuery.of(context).size.width;
     var tableWidth = MediaQuery.of(context).size.height / 2;
 
-    List _items = [
+    /* List _items = [
       {"id": "p1", "name": "User 1", "description": "Description 1"},
       {"id": "p2", "name": "User 2", "description": "Description 2"},
       {"id": "p3", "name": "User 3", "description": "Description 2"},
@@ -60,20 +519,181 @@ class _TableScreenAltState extends State<TableScreenAlt> {
       {"id": "p18", "name": "User 18", "description": "Description 2"},
       {"id": "p19", "name": "User 19", "description": "Description 2"},
       {"id": "p20", "name": "User 20", "description": "Description 3"}
-    ];
+    ];*/
 
     return Scaffold(
       appBar: AppBar(
+        actions: [
+          IconButton(
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      scrollable: true,
+                      title: Text('Change Settings'),
+                      content: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Form(
+                          child: Column(
+                            children: <Widget>[
+                              Row(
+                                children: [
+                                  Text('Table type:  '),
+                                  StatefulBuilder(builder:
+                                      (BuildContext context,
+                                          StateSetter setState) {
+                                    return DropdownButton<String>(
+                                      value: (widget.tableData['table_type']) ??
+                                          null,
+                                      items: tableTypes.map(
+                                        (tableType) {
+                                          return DropdownMenuItem<String>(
+                                            value: tableType,
+                                            child: Text(tableType),
+                                          );
+                                        },
+                                      ).toList(),
+                                      onChanged: (value) {
+                                        setState(
+                                          () {
+                                            tableType = value;
+                                          },
+                                        );
+                                      },
+                                    );
+                                  })
+                                ],
+                              ),
+                              Row(
+                                children: [
+                                  Text('Game:  '),
+                                  StatefulBuilder(builder:
+                                      (BuildContext context,
+                                          StateSetter setState) {
+                                    return DropdownButton<String>(
+                                      value: (widget.tableData['game']) ?? null,
+                                      items: games.map(
+                                        (game) {
+                                          return DropdownMenuItem<String>(
+                                            value: game,
+                                            child: Text(game),
+                                          );
+                                        },
+                                      ).toList(),
+                                      onChanged: (value) {
+                                        setState(
+                                          () {
+                                            game = value;
+                                          },
+                                        );
+                                      },
+                                    );
+                                  })
+                                ],
+                              ),
+                              TextButton(
+                                  onPressed: () {
+                                    showDialog(
+                                      context: context,
+                                      builder: (BuildContext context) {
+                                        return AlertDialog(
+                                          scrollable: true,
+                                          title: Text('Close'),
+                                          content: Padding(
+                                            padding: const EdgeInsets.all(8.0),
+                                            child: Form(
+                                              child: Column(
+                                                children: <Widget>[
+                                                  TextButton(
+                                                    style: TextButton.styleFrom(
+                                                        backgroundColor:
+                                                            Colors.green[800]),
+                                                    child: Text(
+                                                      "With players continue (High Card)",
+                                                      style: TextStyle(
+                                                          color: Colors.white,
+                                                          fontSize: 14),
+                                                    ),
+                                                    onPressed: () {
+                                                      setState(
+                                                        () {
+                                                          closeTable(
+                                                              widget.tableData[
+                                                                  'objectId']);
+                                                        },
+                                                      );
+                                                      Navigator.pop(context);
+                                                    },
+                                                  ),
+                                                  TextButton(
+                                                    style: TextButton.styleFrom(
+                                                        backgroundColor:
+                                                            Colors.green[800]),
+                                                    child: Text(
+                                                      "      Without players continue      ",
+                                                      style: TextStyle(
+                                                          color: Colors.white,
+                                                          fontSize: 15),
+                                                    ),
+                                                    onPressed: () {
+                                                      setState(
+                                                        () {
+                                                          closeTable(
+                                                              widget.tableData[
+                                                                  'objectId']);
+                                                        },
+                                                      );
+                                                      Navigator.pop(context);
+                                                    },
+                                                  )
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    );
+                                  },
+                                  child: Text('Close Table'))
+                            ],
+                          ),
+                        ),
+                      ),
+                      actions: [
+                        TextButton(
+                          style: TextButton.styleFrom(
+                              backgroundColor: Colors.green[800]),
+                          child: Text("Submit"),
+                          onPressed: () async {
+                            await changeTable(game);
+                            setupTable();
+                            playersList(game);
+                            liveQuery();
+                            Navigator.pop(context);
+                          },
+                        )
+                      ],
+                    );
+                  },
+                );
+              },
+              icon: Icon(Icons.settings))
+        ],
         backgroundColor: Colors.green[800],
-        title: Text(widget.tableData["name"]),
+        title: Text('Table: ' +
+            widget.tableData["table_num"].toString() +
+            " / " +
+            "Game: " +
+            widget.tableData["game"].toString()),
       ),
       body: Container(
         child: Row(
           children: [
-            _items.length > 0
+            users.length > 0
                 ? Expanded(
                     child: ListView.builder(
-                      itemCount: _items.length,
+                      itemCount: users.length,
                       itemBuilder: (context, index) {
                         return Card(
                           color: Colors.grey[100],
@@ -82,7 +702,7 @@ class _TableScreenAltState extends State<TableScreenAlt> {
                           child: ListTile(
                             // tileColor: Colors.grey[100],
                             leading: Draggable(
-                              data: _items[index]["name"],
+                              data: users[index],
                               child: CircleAvatar(
                                   backgroundColor: Colors.grey[300],
                                   child: Icon(Icons.person, color: Colors.red)),
@@ -94,14 +714,18 @@ class _TableScreenAltState extends State<TableScreenAlt> {
                                   child: Icon(Icons.person, color: Colors.red)),
                               dragAnchor: DragAnchor.pointer,
                             ),
-                            title: Text(_items[index]["name"]),
-                            subtitle: Text(_items[index]["description"]),
+                            title: Text(users[index]["username"]['Name']),
+                            subtitle: Text(users[index]['game'] +
+                                ' / ' +
+                                users[index]['favorite'].toString()),
                           ),
                         );
                       },
                     ),
                   )
-                : Container(),
+                : Expanded(
+                    child: Center(child: Text('No Players available')),
+                  ),
             SizedBox(
               height: height / 1.5,
               child: Stack(
@@ -109,7 +733,7 @@ class _TableScreenAltState extends State<TableScreenAlt> {
                   alignment: Alignment.center,
                   children: [
                     Hero(
-                      tag: widget.tableData["name"],
+                      tag: widget.tableData["table_num"].toString(),
                       child: RotatedBox(
                         quarterTurns: 3,
                         child: CustomPaint(
@@ -164,12 +788,18 @@ class _TableScreenAltState extends State<TableScreenAlt> {
                                 },
                                 onAccept: (data) {
                                   setState(() {
-                                    chair["user"] = "test";
+                                    chair['user'] = data;
                                   });
+                                  seatPlayer(
+                                      widget.tableData['objectId'],
+                                      data["username"]['Name'],
+                                      data['objectId'],
+                                      chair['name']);
                                   ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
-                                          content: Text(
-                                              data + " added successfully!")));
+                                          content: Text(data["username"]
+                                                  ['Name'] +
+                                              " added successfully!")));
                                 },
                               )
                             : DragTarget(
@@ -189,12 +819,18 @@ class _TableScreenAltState extends State<TableScreenAlt> {
                                 },
                                 onAccept: (data) {
                                   setState(() {
-                                    chair["user"] = "test";
+                                    chair['user'] = data;
                                   });
+                                  seatPlayer(
+                                      widget.tableData['objectId'],
+                                      data["username"]['Name'],
+                                      data['objectId'],
+                                      chair['name']);
                                   ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
-                                          content: Text(
-                                              data + " added successfully!")));
+                                          content: Text(data["username"]
+                                                  ['Name'] +
+                                              " added successfully!")));
                                 },
                               ),
                       )
