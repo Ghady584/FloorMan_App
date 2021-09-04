@@ -36,6 +36,42 @@ class _CasinoLayOutAltState extends State<CasinoLayOutAlt> {
     await table.save();
   }
 
+  int getplayersnum(var table) {
+    int x = 0;
+    if (table['seat_1'] != '') {
+      x++;
+    }
+    if (table['seat_2'] != '') {
+      x++;
+    }
+
+    if (table['seat_3'] != '') {
+      x++;
+    }
+    if (table['seat_4'] != '') {
+      x++;
+    }
+    if (table['seat_5'] != '') {
+      x++;
+    }
+    if (table['seat_6'] != '') {
+      x++;
+    }
+    if (table['seat_7'] != '') {
+      x++;
+    }
+    if (table['seat_8'] != '') {
+      x++;
+    }
+    if (table['seat_9'] != '') {
+      x++;
+    }
+    if (table['seat_10'] != '') {
+      x++;
+    }
+    return x;
+  }
+
   DateTime dateTodaySt;
   DateTime dateTodayEn;
   DateTime now = DateTime.now();
@@ -113,6 +149,10 @@ class _CasinoLayOutAltState extends State<CasinoLayOutAlt> {
                 style: TextButton.styleFrom(backgroundColor: Colors.green[800]),
                 child: Text("Submit"),
                 onPressed: () {
+                  setState(() {
+                    table['game'] = game;
+                    table['table_type'] = tableType;
+                  });
                   openTable(tableId);
                   Navigator.push(context, MaterialPageRoute(builder: (context) {
                     return TableScreenAlt(tableData: table);
@@ -184,35 +224,53 @@ class _CasinoLayOutAltState extends State<CasinoLayOutAlt> {
           title: Text('Layout'),
         ),
         body: Center(
-          child: tables.length > 0
-              ? Stack(
-                  children: <Widget>[
-                    for (var table in tables)
-                      Positioned(
-                        top: table["y"],
-                        left: table["x"],
-                        child: Transform.rotate(
-                          angle: table["angle"] * pi / 180,
-                          child: GestureDetector(
-                            onTap: () async {
-                              await openTableButton(
-                                  table['opened'], table['objectId'], table);
-                            },
-                            child: Hero(
-                              tag: table["table_num"],
-                              child: CustomPaint(
-                                size: Size(
-                                    tableWidth, (tableWidth * 1).toDouble()),
-                                painter: TablePainter(color: Colors.green[800]),
+            child: tables.length > 0
+                ? Stack(
+                    children: <Widget>[
+                      for (var table in tables)
+                        Positioned(
+                          top: table["y"],
+                          left: table["x"],
+                          child: Transform.rotate(
+                            angle: table["angle"] * pi / 180,
+                            child: GestureDetector(
+                              onTap: () async {
+                                await openTableButton(
+                                    table['opened'], table['objectId'], table);
+                              },
+                              child: Stack(
+                                children: [
+                                  Hero(
+                                    tag: table["table_num"],
+                                    child: CustomPaint(
+                                      size: Size(tableWidth,
+                                          (tableWidth * 1).toDouble()),
+                                      painter: TablePainter(
+                                          color: Colors.green[800]),
+                                    ),
+                                  ),
+                                  Center(
+                                      child: Text(
+                                    'Table :' +
+                                        table['table_num'].toString() +
+                                        '  ' +
+                                        table['game'] +
+                                        '  ' +
+                                        table['table_type'] +
+                                        '  ' +
+                                        getplayersnum(table).toString() +
+                                        "/" +
+                                        '10',
+                                    style: TextStyle(fontSize: 20),
+                                  )),
+                                ],
                               ),
                             ),
                           ),
                         ),
-                      )
-                  ],
-                )
-              : Container(child: Text("No Tables")),
-        ),
+                    ],
+                  )
+                : CircularProgressIndicator()),
       ),
     );
   }

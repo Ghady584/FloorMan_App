@@ -247,6 +247,66 @@ class _RegistrationList extends State<RegistrationList> {
     }
   }
 
+  void checkInState(String username) async {
+    var _dio = new Dio();
+    var options = new Options();
+    options.headers = {
+      'Conten-type': 'application/json',
+      'Accept': 'application/json',
+      'X-Parse-Application-Id': 'ExYGOkRIyPwaQWO52Dtz6DPFp0UecekaMU9yaVLE',
+      'X-Parse-Master-Key': 'tViUC9E1rQXU6evqOiB1Ogn5M66SRp7Ug95MN2NO',
+      'X-Parse-REST-API-Key': '6UgE4EoZJ4pTMkzFvD1H5VVzRenZAsoEJ32yy82I'
+    };
+    options.contentType = 'application/json';
+
+    String url = 'https://parseapi.back4app.com/classes/_User';
+
+    Map<String, String> qParams = {
+      'where': '{"username": "$username"}',
+    };
+    var res = await _dio.put(url,
+        options: options,
+        queryParameters: qParams,
+        data: {'State': 'Checked-In'});
+    if (res.statusCode == 200) {
+      setState(() {
+        user = (res.data);
+      });
+    } else {
+      throw "Unable to retrieve posts.";
+    }
+  }
+
+  void checkoutState(String username) async {
+    var _dio = new Dio();
+    var options = new Options();
+    options.headers = {
+      'Conten-type': 'application/json',
+      'Accept': 'application/json',
+      'X-Parse-Application-Id': 'ExYGOkRIyPwaQWO52Dtz6DPFp0UecekaMU9yaVLE',
+      'X-Parse-Master-Key': 'tViUC9E1rQXU6evqOiB1Ogn5M66SRp7Ug95MN2NO',
+      'X-Parse-REST-API-Key': '6UgE4EoZJ4pTMkzFvD1H5VVzRenZAsoEJ32yy82I'
+    };
+    options.contentType = 'application/json';
+
+    String url = 'https://parseapi.back4app.com/classes/_User';
+
+    Map<String, String> qParams = {
+      'where': '{"username": "$username"}',
+    };
+    var res = await _dio.put(url,
+        options: options,
+        queryParameters: qParams,
+        data: {'State': 'Not Registrated'});
+    if (res.statusCode == 200) {
+      setState(() {
+        user = (res.data);
+      });
+    } else {
+      throw "Unable to retrieve posts.";
+    }
+  }
+
   void checkPlayerIn() async {
     var res = await http.post(
       Uri.parse('https://parseapi.back4app.com/classes/Messages'),
@@ -409,8 +469,7 @@ class _RegistrationList extends State<RegistrationList> {
   }
 
   void filter() async {
-    refreshAll();
-    setDate();
+    await refreshAll();
     if (users == null) {
       null;
     } else {
@@ -459,8 +518,16 @@ class _RegistrationList extends State<RegistrationList> {
 
   void refreshAll() async {
     setState(() {
-      dateTodaySt = DateTime(now.year, now.month, now.day, 9);
-      dateTodayEn = DateTime(now.year, now.month, now.day, 4);
+      dateTodaySt = DateTime(
+        now.year,
+        now.month,
+        now.day,
+      );
+      dateTodayEn = DateTime(
+        now.year,
+        now.month,
+        now.day,
+      );
     });
 
     QueryBuilder<ParseObject> queryPost = QueryBuilder<ParseObject>(
@@ -494,7 +561,8 @@ class _RegistrationList extends State<RegistrationList> {
   void setDate() async {
     QueryBuilder<ParseObject> queryPost =
         QueryBuilder<ParseObject>(ParseObject('registrations'))
-          ..whereNotEqualTo('Registration_Time', null);
+          ..whereNotEqualTo('Registration_Time', null)
+          ..whereEqualTo('registration_time', null);
     var response = await queryPost.query();
 
     if (response.success) {
@@ -524,8 +592,16 @@ class _RegistrationList extends State<RegistrationList> {
     setState(() {
       dateToday = DateTime(now.year, now.month, now.day);
 
-      dateTodaySt = DateTime(now.year, now.month, now.day, 9);
-      dateTodayEn = DateTime(now.year, now.month, now.day, 4);
+      dateTodaySt = DateTime(
+        now.year,
+        now.month,
+        now.day,
+      );
+      dateTodayEn = DateTime(
+        now.year,
+        now.month,
+        now.day,
+      );
     });
     await setDate();
     QueryBuilder<ParseObject> query = QueryBuilder<ParseObject>(
@@ -535,23 +611,20 @@ class _RegistrationList extends State<RegistrationList> {
       ..whereLessThan("registration_time", dateTodayEn.add(Duration(days: 1)));
 
     var response = await query.query();
-    if (mounted) {
-      setState(() {
-        users = response.results;
+    setState(() {
+      users = response.results;
+      switchFavorite();
+      switchCancelReason();
+      switchCancelTime();
+      switchComment();
+      switchRegTime();
+      switchSeat();
+      switchSeatTime();
+      switchTable();
 
-        users.removeWhere((user) => user['Status']['state'] == 'Seated');
-        users.removeWhere((user) => user['Status']['state'] == 'Cancelled');
-      });
-    }
-
-    switchFavorite();
-    switchCancelReason();
-    switchCancelTime();
-    switchComment();
-    switchRegTime();
-    switchSeat();
-    switchSeatTime();
-    switchTable();
+      users.removeWhere((user) => user['Status']['state'] == 'Seated');
+      users.removeWhere((user) => user['Status']['state'] == 'Cancelled');
+    });
 
     Subscription subscription = await liveQuery.client.subscribe(query);
 
@@ -623,12 +696,12 @@ class _RegistrationList extends State<RegistrationList> {
 
   @override
   void initState() {
-    liveQuery();
+    super.initState();
 
     gamesGet();
     playersListGet();
 
-    super.initState();
+    liveQuery();
   }
 
   @override
@@ -1396,6 +1469,8 @@ class _RegistrationList extends State<RegistrationList> {
                                                 onPressed: () {
                                                   playerCancel(
                                                       user['objectId'], cancel);
+                                                  checkoutState(
+                                                      user['username']['Name']);
                                                   Navigator.pop(context);
                                                   cancel =
                                                       'Cancellation Reason';
@@ -1416,6 +1491,7 @@ class _RegistrationList extends State<RegistrationList> {
                                     onPressed: () {
                                       playerCheckIn(user['objectId']);
                                       checkPlayerIn();
+                                      checkInState(user['username']['Name']);
 
                                       Navigator.pop(context);
                                     },

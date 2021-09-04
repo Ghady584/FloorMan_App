@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'dart:developer';
+import 'package:floor_manager/screens/casino_layout_alt.dart';
 import 'package:http/http.dart' as http;
 import 'package:dio/dio.dart';
-
 import 'package:floor_manager/paints/chair.dart';
 import 'package:floor_manager/paints/table.dart';
 import 'package:flutter/material.dart';
@@ -39,13 +39,17 @@ class _TableScreenAltState extends State<TableScreenAlt> {
   }
 
   void changeTable(String tableID) async {
+    setState(() {
+      widget.tableData['game'] = game;
+      widget.tableData['table_type'] = tableType;
+    });
     var table = ParseObject('Tables')
       ..objectId = tableID
       ..set('game', game)
       ..set('table_type', tableType);
 
     await table.save();
-    switchFavorite();
+    // switchFavorite();
   }
 
   var user;
@@ -67,6 +71,34 @@ class _TableScreenAltState extends State<TableScreenAlt> {
       'where': '{"username": "$username"}',
     };
     var res = await _dio.get(url, options: options, queryParameters: qParams);
+    if (res.statusCode == 200) {
+      setState(() {
+        user = (res.data);
+      });
+    } else {
+      throw "Unable to retrieve posts.";
+    }
+  }
+
+  void seatState(String username) async {
+    var _dio = new Dio();
+    var options = new Options();
+    options.headers = {
+      'Conten-type': 'application/json',
+      'Accept': 'application/json',
+      'X-Parse-Application-Id': 'ExYGOkRIyPwaQWO52Dtz6DPFp0UecekaMU9yaVLE',
+      'X-Parse-Master-Key': 'tViUC9E1rQXU6evqOiB1Ogn5M66SRp7Ug95MN2NO',
+      'X-Parse-REST-API-Key': '6UgE4EoZJ4pTMkzFvD1H5VVzRenZAsoEJ32yy82I'
+    };
+    options.contentType = 'application/json';
+
+    String url = 'https://parseapi.back4app.com/classes/_User';
+
+    Map<String, String> qParams = {
+      'where': '{"username": "$username"}',
+    };
+    var res = await _dio.put(url,
+        options: options, queryParameters: qParams, data: {'State': 'Seated'});
     if (res.statusCode == 200) {
       setState(() {
         user = (res.data);
@@ -118,7 +150,10 @@ class _TableScreenAltState extends State<TableScreenAlt> {
       ..set('seat_4', '')
       ..set('seat_5', '')
       ..set('seat_6', '')
-      ..set('seat_7', '');
+      ..set('seat_7', '')
+      ..set('seat_8', '')
+      ..set('seat_9', '')
+      ..set('seat_10', '');
 
     await table.save();
   }
@@ -140,6 +175,7 @@ class _TableScreenAltState extends State<TableScreenAlt> {
   void seatPlayer(
       String tableID, String userName, String userID, String chairName) async {
     await getUser_app(userName);
+    await seatState(userName);
 
     var player = ParseObject('registrations')
       ..objectId = userID
@@ -256,7 +292,33 @@ class _TableScreenAltState extends State<TableScreenAlt> {
     }
   }
 
+  var tables;
+  checkTable() async {
+    QueryBuilder<ParseObject> queryPost =
+        QueryBuilder<ParseObject>(ParseObject('Tables'))
+          ..whereEqualTo('table_num', widget.tableData['tabel_num']);
+
+    var response = await queryPost.query();
+
+    if (response.success) {
+      if (mounted) {
+        setState(
+          () {
+            tables = response.results;
+            for (var table in tables) {
+              widget.tableData['game'] = table['game'];
+            }
+          },
+        );
+      }
+      ;
+    } else {
+      print(response.error);
+    }
+  }
+
   void setupTable() {
+    checkTable();
     for (var chair in _chairs) {
       if (chair['name'] == "Chair 1") {
         if (widget.tableData['seat_1'] != '') {
@@ -329,9 +391,12 @@ class _TableScreenAltState extends State<TableScreenAlt> {
         }
       }
     }
+
+    log('alsfhasjfhasjfkajfhlsKDHFilsgfSLF');
   }
 
   liveQuery() async {
+    //setupTable();
     final LiveQuery liveQuery = LiveQuery();
     setState(() {
       dateTodaySt = DateTime(now.year, now.month, now.day, 9);
@@ -353,8 +418,13 @@ class _TableScreenAltState extends State<TableScreenAlt> {
       setState(
         () {
           users = response.results;
-          users.removeWhere((user) => user['Status']['state'] == 'Seated');
-          users.removeWhere((user) => user['Status']['state'] == 'Cancelled');
+          if (users.contains((user) => user['Status']['state'] == 'Seated')) {
+            users.removeWhere((user) => user['Status']['state'] == 'Seated');
+          }
+          if (users
+              .contains((user) => user['Status']['state'] == 'Cancelled')) {
+            users.removeWhere((user) => user['Status']['state'] == 'Cancelled');
+          }
         },
       );
       if (mounted) {
@@ -375,7 +445,7 @@ class _TableScreenAltState extends State<TableScreenAlt> {
 
       if (mounted) {
         switchFavorite();
-        playersList(widget.tableData['game']);
+        playersList();
       }
     });
 
@@ -390,7 +460,7 @@ class _TableScreenAltState extends State<TableScreenAlt> {
 
       if (mounted) {
         switchFavorite();
-        playersList(widget.tableData['game']);
+        playersList();
       }
     });
 
@@ -405,7 +475,7 @@ class _TableScreenAltState extends State<TableScreenAlt> {
 
       if (mounted) {
         switchFavorite();
-        playersList(widget.tableData['game']);
+        playersList();
       }
     });
 
@@ -420,7 +490,7 @@ class _TableScreenAltState extends State<TableScreenAlt> {
 
       if (mounted) {
         switchFavorite();
-        playersList(widget.tableData['game']);
+        playersList();
       }
     });
 
@@ -435,13 +505,18 @@ class _TableScreenAltState extends State<TableScreenAlt> {
 
       if (mounted) {
         switchFavorite();
-        playersList(widget.tableData['game']);
+        playersList();
       }
     });
   }
 
-  void playersList(String game) async {
+  void playersList() async {
+    // await setupTable();
+
     setState(() {
+      game = widget.tableData['game'];
+      tableType = widget.tableData['table_type'];
+
       dateTodaySt = DateTime(now.year, now.month, now.day, 9);
       dateTodayEn = DateTime(now.year, now.month, now.day, 14);
     });
@@ -460,11 +535,16 @@ class _TableScreenAltState extends State<TableScreenAlt> {
         setState(
           () {
             users = response.results;
-            users.removeWhere((user) => user['Status']['state'] == 'Seated');
-            users.removeWhere((user) => user['Status']['state'] == 'Cancelled');
+            if (users.contains((user) => user['Status']['state'] == 'Seated')) {
+              users.removeWhere((user) => user['Status']['state'] == 'Seated');
+            }
+            if (users
+                .contains((user) => user['Status']['state'] == 'Cancelled')) {
+              users.removeWhere(
+                  (user) => user['Status']['state'] == 'Cancelled');
+            }
           },
         );
-        await setupTable();
 
         switchFavorite();
       } else {
@@ -476,10 +556,11 @@ class _TableScreenAltState extends State<TableScreenAlt> {
   @override
   void initState() {
     super.initState();
-    playersList(widget.tableData['game']);
-    liveQuery();
+    //  playersList();
     this.readJson();
     log(_chairs.toString());
+    liveQuery();
+
     getSeatedObj();
   }
 
@@ -489,6 +570,8 @@ class _TableScreenAltState extends State<TableScreenAlt> {
     final data = await json.decode(response);
     setState(() {
       _chairs = data["chairs"];
+      log(_chairs.toString());
+      setupTable();
     });
   }
 
@@ -544,8 +627,7 @@ class _TableScreenAltState extends State<TableScreenAlt> {
                                       (BuildContext context,
                                           StateSetter setState) {
                                     return DropdownButton<String>(
-                                      value: (widget.tableData['table_type']) ??
-                                          null,
+                                      value: (tableType) ?? null,
                                       items: tableTypes.map(
                                         (tableType) {
                                           return DropdownMenuItem<String>(
@@ -572,7 +654,7 @@ class _TableScreenAltState extends State<TableScreenAlt> {
                                       (BuildContext context,
                                           StateSetter setState) {
                                     return DropdownButton<String>(
-                                      value: (widget.tableData['game']) ?? null,
+                                      value: (game) ?? null,
                                       items: games.map(
                                         (game) {
                                           return DropdownMenuItem<String>(
@@ -623,30 +705,41 @@ class _TableScreenAltState extends State<TableScreenAlt> {
                                                                   'objectId']);
                                                         },
                                                       );
-                                                      Navigator.pop(context);
+                                                      Navigator.push(context,
+                                                          MaterialPageRoute(
+                                                        builder: (context) {
+                                                          return CasinoLayOutAlt();
+                                                        },
+                                                      ));
                                                     },
                                                   ),
                                                   TextButton(
-                                                    style: TextButton.styleFrom(
-                                                        backgroundColor:
-                                                            Colors.green[800]),
-                                                    child: Text(
-                                                      "      Without players continue      ",
-                                                      style: TextStyle(
-                                                          color: Colors.white,
-                                                          fontSize: 15),
-                                                    ),
-                                                    onPressed: () {
-                                                      setState(
-                                                        () {
-                                                          closeTable(
-                                                              widget.tableData[
-                                                                  'objectId']);
-                                                        },
-                                                      );
-                                                      Navigator.pop(context);
-                                                    },
-                                                  )
+                                                      style:
+                                                          TextButton.styleFrom(
+                                                              backgroundColor:
+                                                                  Colors.green[
+                                                                      800]),
+                                                      child: Text(
+                                                        "      Without players continue      ",
+                                                        style: TextStyle(
+                                                            color: Colors.white,
+                                                            fontSize: 15),
+                                                      ),
+                                                      onPressed: () {
+                                                        setState(
+                                                          () {
+                                                            closeTable(widget
+                                                                    .tableData[
+                                                                'objectId']);
+                                                          },
+                                                        );
+                                                        Navigator.push(context,
+                                                            MaterialPageRoute(
+                                                          builder: (context) {
+                                                            return CasinoLayOutAlt();
+                                                          },
+                                                        ));
+                                                      })
                                                 ],
                                               ),
                                             ),
@@ -666,9 +759,12 @@ class _TableScreenAltState extends State<TableScreenAlt> {
                               backgroundColor: Colors.green[800]),
                           child: Text("Submit"),
                           onPressed: () async {
-                            await changeTable(game);
+                            await changeTable(widget.tableData['objectId']);
                             setupTable();
-                            playersList(game);
+                            playersList();
+                            setState(() {
+                              widget.tableData['game'];
+                            });
                             liveQuery();
                             Navigator.pop(context);
                           },
@@ -690,7 +786,7 @@ class _TableScreenAltState extends State<TableScreenAlt> {
       body: Container(
         child: Row(
           children: [
-            users.length > 0
+            users != null
                 ? Expanded(
                     child: ListView.builder(
                       itemCount: users.length,
@@ -833,7 +929,7 @@ class _TableScreenAltState extends State<TableScreenAlt> {
                                               " added successfully!")));
                                 },
                               ),
-                      )
+                      ),
                   ]),
             ),
           ],

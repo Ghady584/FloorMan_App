@@ -250,31 +250,118 @@ class _Daily_SummaryState extends State<Daily_Summary> {
     });
   }
 
-  @override
-  void initState() {
-    liveQuery();
-    super.initState();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-        child: Scaffold(
-      appBar: AppBar(
-        actions: [
-          IconButton(
-            icon: Icon(FontAwesomeIcons.redo),
-            onPressed: () {
-              refresh();
-            },
+  Widget ifTable() {
+    if (tables == null) {
+      return DataTable2(
+        columnSpacing: 0,
+        horizontalMargin: 20,
+        minWidth: 300,
+        columns: [
+          DataColumn2(
+            label: Text('Table',
+                style: TextStyle(
+                    fontSize:
+                        AdaptiveTextSize().getadaptiveTextSize(context, 10))),
+            size: ColumnSize.L,
+          ),
+          DataColumn(
+            label: Text('Game/Blind',
+                style: TextStyle(
+                    fontSize:
+                        AdaptiveTextSize().getadaptiveTextSize(context, 10))),
+          ),
+          DataColumn(
+            label: Text('Buy In',
+                style: TextStyle(
+                    fontSize:
+                        AdaptiveTextSize().getadaptiveTextSize(context, 10))),
+          ),
+          DataColumn(
+            label: Text('Start Time',
+                style: TextStyle(
+                    fontSize:
+                        AdaptiveTextSize().getadaptiveTextSize(context, 10))),
+          ),
+          DataColumn(
+            label: Text('Finish Time',
+                style: TextStyle(
+                    fontSize:
+                        AdaptiveTextSize().getadaptiveTextSize(context, 10))),
+          ),
+          DataColumn(
+            label: Text('Duration',
+                style: TextStyle(
+                    fontSize:
+                        AdaptiveTextSize().getadaptiveTextSize(context, 10))),
+          ),
+          DataColumn(
+            label: Text('Tip',
+                style: TextStyle(
+                    fontSize:
+                        AdaptiveTextSize().getadaptiveTextSize(context, 10))),
+          ),
+          DataColumn(
+            label: Text('Tax',
+                style: TextStyle(
+                    fontSize:
+                        AdaptiveTextSize().getadaptiveTextSize(context, 10))),
           ),
         ],
-        backgroundColor: Colors.green[800],
-        title: Text(
-          "Today\'s Summary",
-        ),
-      ),
-      body: DataTable2(
+        rows: [
+          DataRow2(cells: [
+            DataCell(TextField(
+              controller: this.controllerTable,
+              decoration: InputDecoration(
+                hintText: 'Table',
+              ),
+            )),
+            DataCell(TextField(
+              controller: this.controllerGame,
+              decoration: InputDecoration(
+                hintText: 'Game',
+              ),
+            )),
+            DataCell(TextField(
+              controller: this.controllerBuyIn,
+              decoration: InputDecoration(
+                hintText: 'Buy in',
+              ),
+            )),
+            DataCell(TextField(
+              controller: this.controllerStart,
+              decoration: InputDecoration(
+                hintText: 'Start',
+              ),
+            )),
+            DataCell(TextField(
+              controller: this.controllerEnd,
+              decoration: InputDecoration(
+                hintText: 'End',
+              ),
+            )),
+            DataCell(TextField(
+              controller: this.controllerDuration,
+              decoration: InputDecoration(
+                hintText: 'Duration',
+              ),
+            )),
+            DataCell(TextField(
+              controller: this.controllerTip,
+              decoration: InputDecoration(
+                hintText: 'Tip',
+              ),
+            )),
+            DataCell(TextField(
+              controller: this.controllerTax,
+              decoration: InputDecoration(
+                hintText: 'Tax',
+              ),
+            )),
+          ])
+        ],
+      );
+    } else {
+      DataTable2(
         columnSpacing: 0,
         horizontalMargin: 20,
         minWidth: 300,
@@ -618,7 +705,35 @@ class _Daily_SummaryState extends State<Daily_Summary> {
             )),
           ])
         ],
+      );
+    }
+  }
+
+  @override
+  void initState() {
+    liveQuery();
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+        child: Scaffold(
+      appBar: AppBar(
+        actions: [
+          IconButton(
+            icon: Icon(FontAwesomeIcons.redo),
+            onPressed: () {
+              refresh();
+            },
+          ),
+        ],
+        backgroundColor: Colors.green[800],
+        title: Text(
+          "Today\'s Summary",
+        ),
       ),
+      body: ifTable(),
       floatingActionButton: FloatingActionButton(
           backgroundColor: Colors.green[800],
           child: Icon(
