@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 
 import 'package:floor_manager/components/empty_content.dart';
 import 'package:flutter/material.dart';
@@ -39,7 +40,7 @@ class _RegistrationList extends State<RegistrationList> {
 
   var gamesList;
   String username;
-  final List games = ['(Table change)', '(Dinner Break Request)'];
+  final List games = [];
 
   String game;
 
@@ -213,8 +214,8 @@ class _RegistrationList extends State<RegistrationList> {
     }
   }
 
-  var user;
-
+  var user1;
+  var userStateId;
   void getUser_app(String nama) async {
     var _dio = new Dio();
     var options = new Options(
@@ -239,17 +240,21 @@ class _RegistrationList extends State<RegistrationList> {
     var res = await _dio.get(url, options: options, queryParameters: qParams);
     if (res.statusCode == 200) {
       setState(() {
-        user = (res.data);
+        user1 = (res.data);
       });
-      print(user);
+      getUser_appState(user1['results'][0]['objectId'].toString());
     } else {
       throw "Unable to retrieve posts.";
     }
   }
 
-  void checkInState(String username) async {
+  void getUser_appState(String userAppId) async {
     var _dio = new Dio();
-    var options = new Options();
+    var options = new Options(
+      followRedirects: false,
+      // will not throw errors
+      validateStatus: (status) => true,
+    );
     options.headers = {
       'Conten-type': 'application/json',
       'Accept': 'application/json',
@@ -259,49 +264,20 @@ class _RegistrationList extends State<RegistrationList> {
     };
     options.contentType = 'application/json';
 
-    String url = 'https://parseapi.back4app.com/classes/_User';
+    String url = 'https://parseapi.back4app.com/classes/States';
 
     Map<String, String> qParams = {
-      'where': '{"username": "$username"}',
+      // 'where': '{"user": "$userbla"}',
     };
-    var res = await _dio.put(url,
-        options: options,
-        queryParameters: qParams,
-        data: {'State': 'Checked-In'});
+    var res = await _dio.get(url, options: options, queryParameters: {
+      'where':
+          '{"user": { "__type": "Pointer" , "className": "_User" ,  "objectId": "$userAppId"}}'
+    });
     if (res.statusCode == 200) {
       setState(() {
-        user = (res.data);
+        userStateId = (res.data['results'][0]['objectId']);
       });
-    } else {
-      throw "Unable to retrieve posts.";
-    }
-  }
-
-  void checkoutState(String username) async {
-    var _dio = new Dio();
-    var options = new Options();
-    options.headers = {
-      'Conten-type': 'application/json',
-      'Accept': 'application/json',
-      'X-Parse-Application-Id': 'ExYGOkRIyPwaQWO52Dtz6DPFp0UecekaMU9yaVLE',
-      'X-Parse-Master-Key': 'tViUC9E1rQXU6evqOiB1Ogn5M66SRp7Ug95MN2NO',
-      'X-Parse-REST-API-Key': '6UgE4EoZJ4pTMkzFvD1H5VVzRenZAsoEJ32yy82I'
-    };
-    options.contentType = 'application/json';
-
-    String url = 'https://parseapi.back4app.com/classes/_User';
-
-    Map<String, String> qParams = {
-      'where': '{"username": "$username"}',
-    };
-    var res = await _dio.put(url,
-        options: options,
-        queryParameters: qParams,
-        data: {'State': 'Not Registrated'});
-    if (res.statusCode == 200) {
-      setState(() {
-        user = (res.data);
-      });
+      print(user1);
     } else {
       throw "Unable to retrieve posts.";
     }
@@ -321,12 +297,38 @@ class _RegistrationList extends State<RegistrationList> {
         'player': {
           "__type": "Pointer",
           "className": "_User",
-          "objectId": user['results'][0]['objectId'],
+          "objectId": user1['results'][0]['objectId'],
         },
         'Message': 'You Have been checked in',
       }),
     );
     if (res.statusCode == 201) {
+      // If the server did return a 201 CREATED response,
+      // then parse the JSON.
+      checkinUserState(userStateId);
+      return jsonDecode(res.body);
+    } else {
+      // If the server did not return a 201 CREATED response,
+      // then throw an exception.
+      throw Exception(res.statusCode);
+    }
+  }
+
+  checkinUserState(String stateID) async {
+    var res = await http.put(
+      Uri.parse('https://parseapi.back4app.com/classes/States/' + stateID),
+      headers: {
+        'Content-type': 'application/json',
+        'Accept': 'application/json',
+        'X-Parse-Application-Id': 'ExYGOkRIyPwaQWO52Dtz6DPFp0UecekaMU9yaVLE',
+        'X-Parse-Master-Key': 'tViUC9E1rQXU6evqOiB1Ogn5M66SRp7Ug95MN2NO',
+        'X-Parse-REST-API-Key': '6UgE4EoZJ4pTMkzFvD1H5VVzRenZAsoEJ32yy82I'
+      },
+      body: jsonEncode({
+        'state': 'Checked-In',
+      }),
+    );
+    if (res.statusCode == 200) {
       // If the server did return a 201 CREATED response,
       // then parse the JSON.
       return jsonDecode(res.body);
@@ -351,7 +353,7 @@ class _RegistrationList extends State<RegistrationList> {
         'player': {
           "__type": "Pointer",
           "className": "_User",
-          "objectId": user['results'][0]['objectId'],
+          "objectId": user1['results'][0]['objectId'],
         },
         'Message':
             'Your Dinner Break has started please be back at your seat in 30 minuts',
@@ -534,6 +536,7 @@ class _RegistrationList extends State<RegistrationList> {
         ParseObject('registrations'))
       ..whereGreaterThan('registration_time', dateTodaySt)
       ..whereLessThan("registration_time", dateTodayEn.add(Duration(days: 1)))
+      ..whereEqualTo('type', 'Registration')
       ..includeObject(['username', 'Status']);
 
     var response = await queryPost.query();
@@ -607,6 +610,7 @@ class _RegistrationList extends State<RegistrationList> {
     QueryBuilder<ParseObject> query = QueryBuilder<ParseObject>(
         ParseObject('registrations'))
       ..includeObject(['username', 'Status'])
+      ..whereEqualTo('type', 'Registration')
       ..whereGreaterThan('registration_time', dateTodaySt)
       ..whereLessThan("registration_time", dateTodayEn.add(Duration(days: 1)));
 
@@ -1469,8 +1473,6 @@ class _RegistrationList extends State<RegistrationList> {
                                                 onPressed: () {
                                                   playerCancel(
                                                       user['objectId'], cancel);
-                                                  checkoutState(
-                                                      user['username']['Name']);
                                                   Navigator.pop(context);
                                                   cancel =
                                                       'Cancellation Reason';
@@ -1488,11 +1490,9 @@ class _RegistrationList extends State<RegistrationList> {
                                     child: Text(
                                       "Check-In Player",
                                     ),
-                                    onPressed: () {
+                                    onPressed: () async {
                                       playerCheckIn(user['objectId']);
                                       checkPlayerIn();
-                                      checkInState(user['username']['Name']);
-
                                       Navigator.pop(context);
                                     },
                                   ),

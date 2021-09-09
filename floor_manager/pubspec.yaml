@@ -20,6 +20,9 @@ dependencies:
   flutter_typeahead: ^2.0.0
   http: ^0.12.2
   dio: ^3.0.10
+  flutter_local_notifications: ^4.0.1+2
+  rxdart: ^0.25.0
+
 
 dev_dependencies:
   flutter_test:

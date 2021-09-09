@@ -1,5 +1,6 @@
 import 'package:floor_manager/screens/casino_layout.dart';
 import 'package:floor_manager/screens/casino_layout_alt.dart';
+import 'package:floor_manager/screens/waiting_list.dart';
 import 'package:flutter/material.dart';
 import 'package:parse_server_sdk_flutter/parse_server_sdk.dart';
 import '../main.dart';
@@ -158,17 +159,31 @@ class _HomePageState extends State<HomePage> {
                               ),
                             ),
                           ),
-                          /*   Expanded(
+                          Expanded(
                             child: GestureDetector(
+                              onTap: () {
+                                setState(
+                                  () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) {
+                                          return WaitingList();
+                                        },
+                                      ),
+                                    );
+                                  },
+                                );
+                              },
                               child: ReusableCard(
                                 color: Colors.green[800],
                                 cardChild: IconContent(
-                                  icon: FontAwesomeIcons.cog,
-                                  label: ('Settings'),
+                                  icon: FontAwesomeIcons.listAlt,
+                                  label: ('Waiting List'),
                                 ),
                               ),
                             ),
-                          ),*/
+                          ),
                         ],
                       ),
                       SizedBox(
@@ -180,13 +195,13 @@ class _HomePageState extends State<HomePage> {
                           style: TextButton.styleFrom(
                               backgroundColor: Colors.green[800]),
                           child: Padding(
-                            padding: const EdgeInsets.all(8.0),
+                            padding: const EdgeInsets.all(6.0),
                             child: Text(
                               'Logout',
                               style: TextStyle(
                                   color: Colors.white,
                                   fontSize: AdaptiveTextSize()
-                                      .getadaptiveTextSize(context, 16)),
+                                      .getadaptiveTextSize(context, 10)),
                             ),
                           ),
                           onPressed: () => doUserLogout(),

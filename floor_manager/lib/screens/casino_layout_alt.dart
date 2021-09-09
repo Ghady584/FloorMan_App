@@ -154,11 +154,11 @@ class _CasinoLayOutAltState extends State<CasinoLayOutAlt> {
                     table['table_type'] = tableType;
                   });
                   openTable(tableId);
+                  Navigator.pop(context);
+
                   Navigator.push(context, MaterialPageRoute(builder: (context) {
                     return TableScreenAlt(tableData: table);
                   }));
-
-                  //  Navigator.pop(context);
                 },
               )
             ],
@@ -170,6 +170,39 @@ class _CasinoLayOutAltState extends State<CasinoLayOutAlt> {
         return TableScreenAlt(tableData: table);
       }));
     }
+  }
+
+  var color;
+  dynamic checkColor(
+    var table,
+  ) {
+    if (table['opened'] == true) {
+      if (table['game'] == 'NLH 2/4') {
+        setState(() {
+          color = Colors.green[300];
+        });
+      }
+      if (table['game'] == 'NLH 5/10') {
+        setState(() {
+          color = Colors.green[800];
+        });
+      }
+      if (table['game'] == 'PLO 5/10') {
+        setState(() {
+          color = Colors.red[300];
+        });
+      }
+      if (table['game'] == 'PLO 10/10') {
+        setState(() {
+          color = Colors.red[800];
+        });
+      }
+    } else {
+      setState(() {
+        color = Colors.grey[700];
+      });
+    }
+    return color;
   }
 
   checkTables() async {
@@ -191,11 +224,97 @@ class _CasinoLayOutAltState extends State<CasinoLayOutAlt> {
     }
   }
 
+  liveQuery() async {
+    final LiveQuery liveQuery = LiveQuery();
+
+    QueryBuilder<ParseObject> queryPost =
+        QueryBuilder<ParseObject>(ParseObject('Tables'));
+
+    var response = await queryPost.query();
+
+    if (response.success) {
+      setState(
+        () {
+          tables = response.results;
+        },
+      );
+    } else {
+      print(response.error);
+    }
+
+    Subscription subscription = await liveQuery.client.subscribe(queryPost);
+
+    subscription.on(LiveQueryEvent.create, (value) async {
+      print('*** CREATE ***: ${DateTime.now().toString()}\n $value ');
+      print((value as ParseObject).objectId);
+      print((value as ParseObject).updatedAt);
+      print((value as ParseObject).createdAt);
+      print((value as ParseObject).get('objectId'));
+      print((value as ParseObject).get('updatedAt'));
+      print((value as ParseObject).get('createdAt'));
+      if (mounted) {
+        checkTables();
+      }
+    });
+
+    subscription.on(LiveQueryEvent.update, (value) async {
+      print('*** UPDATE ***: ${DateTime.now().toString()}\n $value ');
+      print((value as ParseObject).objectId);
+      print((value as ParseObject).updatedAt);
+      print((value as ParseObject).createdAt);
+      print((value as ParseObject).get('objectId'));
+      print((value as ParseObject).get('updatedAt'));
+      print((value as ParseObject).get('createdAt'));
+      if (mounted) {
+        checkTables();
+      }
+    });
+
+    subscription.on(LiveQueryEvent.enter, (value) async {
+      print('*** ENTER ***: ${DateTime.now().toString()}\n $value ');
+      print((value as ParseObject).objectId);
+      print((value as ParseObject).updatedAt);
+      print((value as ParseObject).createdAt);
+      print((value as ParseObject).get('objectId'));
+      print((value as ParseObject).get('updatedAt'));
+      print((value as ParseObject).get('createdAt'));
+      if (mounted) {
+        checkTables();
+      }
+    });
+
+    subscription.on(LiveQueryEvent.leave, (value) async {
+      print('*** LEAVE ***: ${DateTime.now().toString()}\n $value ');
+      print((value as ParseObject).objectId);
+      print((value as ParseObject).updatedAt);
+      print((value as ParseObject).createdAt);
+      print((value as ParseObject).get('objectId'));
+      print((value as ParseObject).get('updatedAt'));
+      print((value as ParseObject).get('createdAt'));
+      if (mounted) {
+        checkTables();
+      }
+    });
+
+    subscription.on(LiveQueryEvent.delete, (value) async {
+      print('*** DELETE ***: ${DateTime.now().toString()}\n $value ');
+      print((value as ParseObject).objectId);
+      print((value as ParseObject).updatedAt);
+      print((value as ParseObject).createdAt);
+      print((value as ParseObject).get('objectId'));
+      print((value as ParseObject).get('updatedAt'));
+      print((value as ParseObject).get('createdAt'));
+      if (mounted) {
+        checkTables();
+      }
+    });
+  }
+
   @override
   void initState() {
     super.initState();
     //  this.readJson();
-    checkTables();
+    liveQuery();
   }
 
   /* Future<void> readJson() async {
@@ -237,6 +356,7 @@ class _CasinoLayOutAltState extends State<CasinoLayOutAlt> {
                               onTap: () async {
                                 await openTableButton(
                                     table['opened'], table['objectId'], table);
+                                //      Navigator.pop(context);
                               },
                               child: Stack(
                                 children: [
@@ -246,7 +366,9 @@ class _CasinoLayOutAltState extends State<CasinoLayOutAlt> {
                                       size: Size(tableWidth,
                                           (tableWidth * 1).toDouble()),
                                       painter: TablePainter(
-                                          color: Colors.green[800]),
+                                          color: checkColor(
+                                        table,
+                                      )),
                                     ),
                                   ),
                                   Center(

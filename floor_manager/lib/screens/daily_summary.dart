@@ -167,17 +167,11 @@ class _Daily_SummaryState extends State<Daily_Summary> {
     var response = await queryPost.query();
 
     if (response.success) {
-      if (response.results == null) {
-        setState(() {
-          tables = [''];
-        });
-      } else {
-        setState(
-          () {
-            tables = response.results;
-          },
-        );
-      }
+      setState(
+        () {
+          tables = response.results;
+        },
+      );
     } else {
       print(response.error);
     }
@@ -361,7 +355,7 @@ class _Daily_SummaryState extends State<Daily_Summary> {
         ],
       );
     } else {
-      DataTable2(
+      return DataTable2(
         columnSpacing: 0,
         horizontalMargin: 20,
         minWidth: 300,

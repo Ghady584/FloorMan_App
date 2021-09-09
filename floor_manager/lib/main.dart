@@ -1,11 +1,15 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:parse_server_sdk_flutter/parse_server_sdk.dart';
 import './screens/home_screen.dart';
 import './components/responsive_text.dart';
 import 'package:dio/dio.dart';
+import 'api/noti_api.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  NotificationApi.init();
 
   final keyApplicationId = 'thejoud1997';
   final keyMasterKey = 'thejoud1997';
@@ -39,6 +43,31 @@ class MyApp extends StatelessWidget {
       await currentUser.logout();
       return false;
     } else {
+      liveQuery() async {
+        final LiveQuery liveQuery = LiveQuery();
+
+        QueryBuilder<ParseObject> query =
+            QueryBuilder<ParseObject>(ParseObject('registrations'))
+              ..includeObject(['username'])
+              ..whereEqualTo('type', 'Waiting');
+
+        Subscription subscription = await liveQuery.client.subscribe(query);
+
+        subscription.on(LiveQueryEvent.create, (value) async {
+          print('*** CREATE ***: ${DateTime.now().toString()}\n $value ');
+          print((value as ParseObject).objectId);
+          print((value as ParseObject).updatedAt);
+          print((value as ParseObject).createdAt);
+          print((value as ParseObject).get('objectId'));
+          print((value as ParseObject).get('updatedAt'));
+          print((value as ParseObject).get('createdAt'));
+          NotificationApi.showNotification(
+              title: 'Player Request', body: value['comment'], payload: '');
+        });
+      }
+
+      liveQuery();
+
       return true;
     }
   }

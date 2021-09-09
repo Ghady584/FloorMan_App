@@ -52,10 +52,14 @@ class _TableScreenAltState extends State<TableScreenAlt> {
     // switchFavorite();
   }
 
-  var user;
+  var user1;
   void getUser_app(String username) async {
     var _dio = new Dio();
-    var options = new Options();
+    var options = new Options(
+      followRedirects: false,
+      // will not throw errors
+      validateStatus: (status) => true,
+    );
     options.headers = {
       'Conten-type': 'application/json',
       'Accept': 'application/json',
@@ -72,17 +76,25 @@ class _TableScreenAltState extends State<TableScreenAlt> {
     };
     var res = await _dio.get(url, options: options, queryParameters: qParams);
     if (res.statusCode == 200) {
-      setState(() {
-        user = (res.data);
+      await setState(() {
+        user1 = (res.data);
+
+        getUser_appState(user1['results'][0]['objectId']);
+        log(user1.toString());
       });
     } else {
       throw "Unable to retrieve posts.";
     }
   }
 
-  void seatState(String username) async {
+  var userStateId;
+  void getUser_appState(String userAppId) async {
     var _dio = new Dio();
-    var options = new Options();
+    var options = new Options(
+      followRedirects: false,
+      // will not throw errors
+      validateStatus: (status) => true,
+    );
     options.headers = {
       'Conten-type': 'application/json',
       'Accept': 'application/json',
@@ -92,19 +104,44 @@ class _TableScreenAltState extends State<TableScreenAlt> {
     };
     options.contentType = 'application/json';
 
-    String url = 'https://parseapi.back4app.com/classes/_User';
+    String url = 'https://parseapi.back4app.com/classes/States';
 
-    Map<String, String> qParams = {
-      'where': '{"username": "$username"}',
-    };
-    var res = await _dio.put(url,
-        options: options, queryParameters: qParams, data: {'State': 'Seated'});
+    var res = await _dio.get(url, options: options, queryParameters: {
+      'where':
+          '{"user": { "__type": "Pointer" , "className": "_User" ,  "objectId": "$userAppId"}}'
+    });
     if (res.statusCode == 200) {
       setState(() {
-        user = (res.data);
+        userStateId = (res.data['results'][0]['objectId']);
       });
+      print(user1);
     } else {
       throw "Unable to retrieve posts.";
+    }
+  }
+
+  seatUserState(String stateID) async {
+    var res = await http.put(
+      Uri.parse('https://parseapi.back4app.com/classes/States/' + stateID),
+      headers: {
+        'Content-type': 'application/json',
+        'Accept': 'application/json',
+        'X-Parse-Application-Id': 'ExYGOkRIyPwaQWO52Dtz6DPFp0UecekaMU9yaVLE',
+        'X-Parse-Master-Key': 'tViUC9E1rQXU6evqOiB1Ogn5M66SRp7Ug95MN2NO',
+        'X-Parse-REST-API-Key': '6UgE4EoZJ4pTMkzFvD1H5VVzRenZAsoEJ32yy82I'
+      },
+      body: jsonEncode({
+        'state': 'Seated',
+      }),
+    );
+    if (res.statusCode == 200) {
+      // If the server did return a 201 CREATED response,
+      // then parse the JSON.
+      return jsonDecode(res.body);
+    } else {
+      // If the server did not return a 201 CREATED response,
+      // then throw an exception.
+      throw Exception(res.statusCode);
     }
   }
 
@@ -122,7 +159,7 @@ class _TableScreenAltState extends State<TableScreenAlt> {
         'player': {
           "__type": "Pointer",
           "className": "_User",
-          "objectId": user['results'][0]['objectId'],
+          "objectId": user1['results'][0]['objectId'],
         },
         'Message': 'Your Table is ready "$seatX"',
       }),
@@ -130,6 +167,7 @@ class _TableScreenAltState extends State<TableScreenAlt> {
     if (res.statusCode == 201) {
       // If the server did return a 201 CREATED response,
       // then parse the JSON.
+      seatUserState(userStateId);
       return jsonDecode(res.body);
     } else {
       // If the server did not return a 201 CREATED response,
@@ -175,7 +213,6 @@ class _TableScreenAltState extends State<TableScreenAlt> {
   void seatPlayer(
       String tableID, String userName, String userID, String chairName) async {
     await getUser_app(userName);
-    await seatState(userName);
 
     var player = ParseObject('registrations')
       ..objectId = userID
@@ -296,7 +333,7 @@ class _TableScreenAltState extends State<TableScreenAlt> {
   checkTable() async {
     QueryBuilder<ParseObject> queryPost =
         QueryBuilder<ParseObject>(ParseObject('Tables'))
-          ..whereEqualTo('table_num', widget.tableData['tabel_num']);
+          ..whereEqualTo('table_num', widget.tableData['table_num']);
 
     var response = await queryPost.query();
 
@@ -311,6 +348,36 @@ class _TableScreenAltState extends State<TableScreenAlt> {
           },
         );
       }
+      ;
+    } else {
+      print(response.error);
+    }
+  }
+
+  checkTableSeats() async {
+    QueryBuilder<ParseObject> queryPost =
+        QueryBuilder<ParseObject>(ParseObject('Tables'))
+          ..whereEqualTo('table_num', widget.tableData['table_num']);
+
+    var response = await queryPost.query();
+
+    if (response.success) {
+      setState(() {
+        tables = response.results;
+        game = tables[0]['game'];
+        tableType = tables[0]['table_type'];
+        widget.tableData['seat_1'] = tables[0]['seat_1'];
+        widget.tableData['seat_2'] = tables[0]['seat_2'];
+        widget.tableData['seat_3'] = tables[0]['seat_3'];
+        widget.tableData['seat_4'] = tables[0]['seat_4'];
+        widget.tableData['seat_5'] = tables[0]['seat_5'];
+        widget.tableData['seat_6'] = tables[0]['seat_6'];
+        widget.tableData['seat_7'] = tables[0]['seat_7'];
+        widget.tableData['seat_8'] = tables[0]['seat_8'];
+        widget.tableData['seat_9'] = tables[0]['seat_9'];
+        widget.tableData['seat_10'] = tables[0]['seat_10'];
+      });
+
       ;
     } else {
       print(response.error);
@@ -391,23 +458,28 @@ class _TableScreenAltState extends State<TableScreenAlt> {
         }
       }
     }
-
-    log('alsfhasjfhasjfkajfhlsKDHFilsgfSLF');
   }
 
   liveQuery() async {
     //setupTable();
     final LiveQuery liveQuery = LiveQuery();
     setState(() {
-      dateTodaySt = DateTime(now.year, now.month, now.day, 9);
-      dateTodayEn = DateTime(now.year, now.month, now.day, 14);
+      dateTodaySt = DateTime(
+        now.year,
+        now.month,
+        now.day,
+      );
+      dateTodayEn = DateTime(
+        now.year,
+        now.month,
+        now.day,
+      );
     });
 
     QueryBuilder<ParseObject> query = QueryBuilder<ParseObject>(
         ParseObject('registrations'))
       ..includeObject(['username', 'Status'])
-      ..whereContainedIn('game', [widget.tableData['game'], '(Table change)'])
-      // ..whereEqualTo('game', game)
+      ..whereContainedIn('game', [widget.tableData['game']])
       ..whereGreaterThan('registration_time', dateTodaySt)
       ..whereLessThan("registration_time", dateTodayEn.add(Duration(days: 1)));
 
@@ -418,13 +490,9 @@ class _TableScreenAltState extends State<TableScreenAlt> {
       setState(
         () {
           users = response.results;
-          if (users.contains((user) => user['Status']['state'] == 'Seated')) {
-            users.removeWhere((user) => user['Status']['state'] == 'Seated');
-          }
-          if (users
-              .contains((user) => user['Status']['state'] == 'Cancelled')) {
-            users.removeWhere((user) => user['Status']['state'] == 'Cancelled');
-          }
+          users.removeWhere((user) => user['Status']['state'] == 'Seated');
+          users.removeWhere((user) => user['Status']['state'] == 'Cancelled');
+          users.removeWhere((user) => user['Status']['state'] == 'Pending');
         },
       );
       if (mounted) {
@@ -524,7 +592,7 @@ class _TableScreenAltState extends State<TableScreenAlt> {
     QueryBuilder<ParseObject> queryPost = QueryBuilder<ParseObject>(
         ParseObject('registrations'))
       //  ..whereContainedIn('status', st)
-      ..whereContainedIn('game', [widget.tableData['game'], '(Table change)'])
+      ..whereContainedIn('game', [widget.tableData['game']])
       ..includeObject(['username', 'Status'])
       ..whereGreaterThan('registration_time', dateTodaySt)
       ..whereLessThan("registration_time", dateTodayEn.add(Duration(days: 1)));
@@ -535,14 +603,9 @@ class _TableScreenAltState extends State<TableScreenAlt> {
         setState(
           () {
             users = response.results;
-            if (users.contains((user) => user['Status']['state'] == 'Seated')) {
-              users.removeWhere((user) => user['Status']['state'] == 'Seated');
-            }
-            if (users
-                .contains((user) => user['Status']['state'] == 'Cancelled')) {
-              users.removeWhere(
-                  (user) => user['Status']['state'] == 'Cancelled');
-            }
+            users.removeWhere((user) => user['Status']['state'] == 'Seated');
+
+            users.removeWhere((user) => user['Status']['state'] == 'Cancelled');
           },
         );
 
@@ -607,6 +670,41 @@ class _TableScreenAltState extends State<TableScreenAlt> {
     return Scaffold(
       appBar: AppBar(
         actions: [
+          Builder(
+            builder: (context) => Center(
+              child: IconButton(
+                icon: Icon(Icons.person_pin_circle_outlined),
+                onPressed: () async {
+                  await checkTableSeats();
+                  showModalBottomSheet(
+                    context: context,
+                    builder: (context) {
+                      return Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          children: [
+                            Text('Table: ' +
+                                widget.tableData['table_num'].toString()),
+                            Text('Game: ' + widget.tableData['game']),
+                            Text('Seat 1: ' + widget.tableData['seat_1']),
+                            Text('Seat 2: ' + widget.tableData['seat_2']),
+                            Text('Seat 3: ' + widget.tableData['seat_3']),
+                            Text('Seat 4: ' + widget.tableData['seat_4']),
+                            Text('Seat 5: ' + widget.tableData['seat_5']),
+                            Text('Seat 6: ' + widget.tableData['seat_6']),
+                            Text('Seat 7: ' + widget.tableData['seat_7']),
+                            Text('Seat 8: ' + widget.tableData['seat_8']),
+                            Text('Seat 9: ' + widget.tableData['seat_9']),
+                            Text('Seat 10: ' + widget.tableData['seat_10']),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ),
           IconButton(
               onPressed: () {
                 showDialog(
@@ -705,6 +803,7 @@ class _TableScreenAltState extends State<TableScreenAlt> {
                                                                   'objectId']);
                                                         },
                                                       );
+                                                      Navigator.pop(context);
                                                       Navigator.push(context,
                                                           MaterialPageRoute(
                                                         builder: (context) {
@@ -733,6 +832,8 @@ class _TableScreenAltState extends State<TableScreenAlt> {
                                                                 'objectId']);
                                                           },
                                                         );
+                                                        Navigator.pop(context);
+
                                                         Navigator.push(context,
                                                             MaterialPageRoute(
                                                           builder: (context) {
@@ -796,7 +897,7 @@ class _TableScreenAltState extends State<TableScreenAlt> {
                           margin: EdgeInsets.all(2),
                           elevation: 0,
                           child: ListTile(
-                            // tileColor: Colors.grey[100],
+                            tileColor: Colors.grey[200],
                             leading: Draggable(
                               data: users[index],
                               child: CircleAvatar(
