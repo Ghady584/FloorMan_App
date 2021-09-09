@@ -885,83 +885,74 @@ class _TableScreenAltState extends State<TableScreenAlt> {
             widget.tableData["game"].toString()),
       ),
       body: Container(
-        child: Row(
-          children: [
-            users != null
-                ? Expanded(
-                    child: ListView.builder(
-                      itemCount: users.length,
-                      itemBuilder: (context, index) {
-                        return Card(
-                          color: Colors.grey[100],
-                          margin: EdgeInsets.all(2),
-                          elevation: 0,
-                          child: ListTile(
-                            tileColor: Colors.grey[200],
-                            leading: Draggable(
-                              data: users[index],
-                              child: CircleAvatar(
-                                  backgroundColor: Colors.grey[300],
-                                  child: Icon(Icons.person, color: Colors.red)),
-                              feedback: CircleAvatar(
-                                  backgroundColor: Colors.grey[300],
-                                  child: Icon(Icons.person, color: Colors.red)),
-                              childWhenDragging: CircleAvatar(
-                                  backgroundColor: Colors.grey[600],
-                                  child: Icon(Icons.person, color: Colors.red)),
-                              dragAnchor: DragAnchor.pointer,
+        child: Stack(children: [
+          Row(
+            children: [
+              users != null
+                  ? Expanded(
+                      child: ListView.builder(
+                        itemCount: users.length,
+                        itemBuilder: (context, index) {
+                          return Card(
+                            color: Colors.grey[100],
+                            margin: EdgeInsets.all(2),
+                            elevation: 0,
+                            child: ListTile(
+                              tileColor: Colors.grey[200],
+                              leading: Draggable(
+                                data: users[index],
+                                child: CircleAvatar(
+                                    backgroundColor: Colors.grey[300],
+                                    child:
+                                        Icon(Icons.person, color: Colors.red)),
+                                feedback: CircleAvatar(
+                                    backgroundColor: Colors.grey[300],
+                                    child:
+                                        Icon(Icons.person, color: Colors.red)),
+                                childWhenDragging: CircleAvatar(
+                                    backgroundColor: Colors.grey[600],
+                                    child:
+                                        Icon(Icons.person, color: Colors.red)),
+                                dragAnchor: DragAnchor.pointer,
+                              ),
+                              title: Text(users[index]["username"]['Name']),
+                              subtitle: Text(users[index]['game'] +
+                                  ' / ' +
+                                  users[index]['favorite'].toString()),
                             ),
-                            title: Text(users[index]["username"]['Name']),
-                            subtitle: Text(users[index]['game'] +
-                                ' / ' +
-                                users[index]['favorite'].toString()),
-                          ),
-                        );
-                      },
+                          );
+                        },
+                      ),
+                    )
+                  : Expanded(
+                      child: Center(child: Text('No Players available')),
                     ),
-                  )
-                : Expanded(
-                    child: Center(child: Text('No Players available')),
-                  ),
-            SizedBox(
-              height: height / 1.5,
-              child: Stack(
-                  // clipBehavior: Clip.none,
-                  alignment: Alignment.center,
-                  children: [
-                    Hero(
-                      tag: widget.tableData["table_num"].toString(),
-                      child: RotatedBox(
-                        quarterTurns: 3,
-                        child: CustomPaint(
-                          size: Size(616, (616 * 1).toDouble()),
-                          painter: TablePainter(color: Colors.green[800]),
+              SizedBox(
+                height: height / 1.5,
+                child: Stack(
+                    // clipBehavior: Clip.none,
+                    alignment: Alignment.center,
+                    children: [
+                      Hero(
+                        tag: widget.tableData["table_num"].toString(),
+                        child: RotatedBox(
+                          quarterTurns: 3,
+                          child: CustomPaint(
+                            size: Size(616, (616 * 1).toDouble()),
+                            painter: TablePainter(color: Colors.green[800]),
+                          ),
                         ),
                       ),
-                    ),
-                    for (var chair in _chairs)
-                      Positioned(
-                        top: chair["y"] + 100,
-                        left: chair["x"],
-                        child: chair["user"] != null
-                            ? DragTarget(
-                                builder:
-                                    (context, candidateData, rejectedData) {
-                                  return candidateData.length > 0
-                                      ? SizedBox(
-                                          width: 500 / 6,
-                                          height: 500 / 6,
-                                          child: CircleAvatar(
-                                              backgroundColor: Colors.grey[300],
-                                              child: Icon(
-                                                Icons.person,
-                                                color: Colors.green,
-                                                size: 300 / 6,
-                                              )),
-                                        )
-                                      : Draggable(
-                                          data: chair["user"],
-                                          child: SizedBox(
+                      for (var chair in _chairs)
+                        Positioned(
+                          top: chair["y"] + 100,
+                          left: chair["x"],
+                          child: chair["user"] != null
+                              ? DragTarget(
+                                  builder:
+                                      (context, candidateData, rejectedData) {
+                                    return candidateData.length > 0
+                                        ? SizedBox(
                                             width: 500 / 6,
                                             height: 500 / 6,
                                             child: CircleAvatar(
@@ -969,72 +960,110 @@ class _TableScreenAltState extends State<TableScreenAlt> {
                                                     Colors.grey[300],
                                                 child: Icon(
                                                   Icons.person,
-                                                  color: Colors.red,
+                                                  color: Colors.green,
                                                   size: 300 / 6,
                                                 )),
-                                          ),
-                                          feedback: CircleAvatar(
-                                              backgroundColor: Colors.grey[300],
-                                              child: SizedBox(
-                                                  width: 616 / 6,
-                                                  height: 616 / 6,
-                                                  child: Icon(Icons.person,
-                                                      color: Colors.red))),
-                                          dragAnchor: DragAnchor.pointer,
-                                        );
-                                },
-                                onAccept: (data) {
-                                  setState(() {
-                                    chair['user'] = data;
-                                  });
-                                  seatPlayer(
-                                      widget.tableData['objectId'],
-                                      data["username"]['Name'],
-                                      data['objectId'],
-                                      chair['name']);
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                          content: Text(data["username"]
-                                                  ['Name'] +
-                                              " added successfully!")));
-                                },
-                              )
-                            : DragTarget(
-                                builder:
-                                    (context, candidateData, rejectedData) {
-                                  return candidateData.length > 0
-                                      ? SizedBox(
-                                          width: 616 / 6,
-                                          height: 616 / 6,
-                                          child: Icon(Icons.person,
-                                              color: Colors.red))
-                                      : CustomPaint(
-                                          size: Size(616 / 6,
-                                              (616 / 6 * 1).toDouble()),
-                                          painter: ChairPainter(),
-                                        );
-                                },
-                                onAccept: (data) {
-                                  setState(() {
-                                    chair['user'] = data;
-                                  });
-                                  seatPlayer(
-                                      widget.tableData['objectId'],
-                                      data["username"]['Name'],
-                                      data['objectId'],
-                                      chair['name']);
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                          content: Text(data["username"]
-                                                  ['Name'] +
-                                              " added successfully!")));
-                                },
-                              ),
-                      ),
-                  ]),
+                                          )
+                                        : Draggable(
+                                            data: chair["user"],
+                                            child: SizedBox(
+                                              width: 500 / 6,
+                                              height: 500 / 6,
+                                              child: CircleAvatar(
+                                                  backgroundColor:
+                                                      Colors.grey[300],
+                                                  child: Icon(
+                                                    Icons.person,
+                                                    color: Colors.red,
+                                                    size: 300 / 6,
+                                                  )),
+                                            ),
+                                            feedback: CircleAvatar(
+                                                backgroundColor:
+                                                    Colors.grey[300],
+                                                child: SizedBox(
+                                                    width: 616 / 6,
+                                                    height: 616 / 6,
+                                                    child: Icon(Icons.person,
+                                                        color: Colors.red))),
+                                            dragAnchor: DragAnchor.pointer,
+                                          );
+                                  },
+                                  onAccept: (data) {
+                                    setState(() {
+                                      chair['user'] = data;
+                                    });
+                                    seatPlayer(
+                                        widget.tableData['objectId'],
+                                        data["username"]['Name'],
+                                        data['objectId'],
+                                        chair['name']);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                            content: Text(data["username"]
+                                                    ['Name'] +
+                                                " added successfully!")));
+                                  },
+                                )
+                              : DragTarget(
+                                  builder:
+                                      (context, candidateData, rejectedData) {
+                                    return candidateData.length > 0
+                                        ? SizedBox(
+                                            width: 616 / 6,
+                                            height: 616 / 6,
+                                            child: Icon(Icons.person,
+                                                color: Colors.red))
+                                        : CustomPaint(
+                                            size: Size(616 / 6,
+                                                (616 / 6 * 1).toDouble()),
+                                            painter: ChairPainter(),
+                                          );
+                                  },
+                                  onAccept: (data) {
+                                    setState(() {
+                                      chair['user'] = data;
+                                    });
+                                    seatPlayer(
+                                        widget.tableData['objectId'],
+                                        data["username"]['Name'],
+                                        data['objectId'],
+                                        chair['name']);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                            content: Text(data["username"]
+                                                    ['Name'] +
+                                                " added successfully!")));
+                                  },
+                                ),
+                        ),
+                    ]),
+              ),
+            ],
+          ),
+          Positioned(
+            child: DragTarget(
+              builder: (context, candidateData, rejectedData) {
+                return ClipOval(
+                  child: Container(
+                    decoration: BoxDecoration(color: Colors.green),
+                    child: SizedBox(
+                        width: 500 / 6,
+                        height: 500 / 6,
+                        child: Icon(
+                          Icons.close,
+                          color: Colors.red,
+                          size: 300 / 6,
+                        )),
+                  ),
+                );
+              },
+              onAccept: (data) {},
             ),
-          ],
-        ),
+            right: 10,
+            bottom: 10,
+          )
+        ]),
       ),
     );
   }
