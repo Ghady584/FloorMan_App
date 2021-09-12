@@ -1,6 +1,4 @@
 import 'dart:convert';
-import 'dart:developer';
-
 import 'package:floor_manager/components/empty_content.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
@@ -41,12 +39,13 @@ class _RegistrationList extends State<RegistrationList> {
   var gamesList;
   String username;
   final List games = [];
-
-  String game;
+  List games1 = [];
+  var game;
 
   final List cancels = ['Cancelled by floormanager', 'No Show'];
   String cancel;
   bool favorite = false;
+  String fav_game;
 
   final List types = ['Registration', 'Waiting'];
   String type;
@@ -77,10 +76,10 @@ class _RegistrationList extends State<RegistrationList> {
 
   void playerCreate(
     String name,
-    String game,
+    List game,
     String registrated,
     String status,
-    bool favorite,
+    String favorite,
   ) async {
     QueryBuilder<ParseObject> playerObj =
         QueryBuilder<ParseObject>(ParseObject('players'))
@@ -103,7 +102,7 @@ class _RegistrationList extends State<RegistrationList> {
           ..set('username', response_playerObj.result[0])
           ..set('game', game)
           ..set('type', 'Registration')
-          ..set('favorite', favorite)
+          ..set('fav_game', favorite)
           ..set('registrated_by', registrated)
           ..set('check_in_time', DateTime.now())
           ..set('registration_time', DateTime.now())
@@ -121,7 +120,7 @@ class _RegistrationList extends State<RegistrationList> {
           ..set('username', response_playerObj.result[0])
           ..set('game', game)
           ..set('type', 'Registration')
-          ..set('favorite', favorite)
+          ..set('fav_game', favorite)
           ..set('registrated_by', registrated)
           ..set('check_in_time', DateTime.now())
           ..set('registration_time', DateTime.now())
@@ -266,9 +265,6 @@ class _RegistrationList extends State<RegistrationList> {
 
     String url = 'https://parseapi.back4app.com/classes/States';
 
-    Map<String, String> qParams = {
-      // 'where': '{"user": "$userbla"}',
-    };
     var res = await _dio.get(url, options: options, queryParameters: {
       'where':
           '{"user": { "__type": "Pointer" , "className": "_User" ,  "objectId": "$userAppId"}}'
@@ -531,7 +527,7 @@ class _RegistrationList extends State<RegistrationList> {
         now.day,
       );
     });
-
+    await setDate();
     QueryBuilder<ParseObject> queryPost = QueryBuilder<ParseObject>(
         ParseObject('registrations'))
       ..whereGreaterThan('registration_time', dateTodaySt)
@@ -798,6 +794,7 @@ class _RegistrationList extends State<RegistrationList> {
                                       setState(
                                         () {
                                           game = value;
+                                          games1.add(game);
                                         },
                                       );
                                     },
@@ -898,8 +895,13 @@ class _RegistrationList extends State<RegistrationList> {
                           backgroundColor: Colors.green[800]),
                       child: Text("Submit"),
                       onPressed: () {
-                        playerCreate(_usernameController.text, game,
-                            registrated, state, favorite);
+                        if (favorite == true) {
+                          setState(() {
+                            fav_game = game;
+                          });
+                        }
+                        playerCreate(_usernameController.text, games1,
+                            registrated, state, fav_game);
                         _usernameController.clear();
 
                         setState(() {
@@ -1227,29 +1229,7 @@ class _RegistrationList extends State<RegistrationList> {
                                       SizedBox(
                                         width: 25,
                                       ),
-                                      StatefulBuilder(
-                                        builder: (BuildContext context,
-                                            StateSetter setState) {
-                                          return DropdownButton<String>(
-                                            value: (game) ?? user['game'],
-                                            items: games.map(
-                                              (game) {
-                                                return DropdownMenuItem<String>(
-                                                  value: game,
-                                                  child: Text(game),
-                                                );
-                                              },
-                                            ).toList(),
-                                            onChanged: (value) {
-                                              setState(
-                                                () {
-                                                  game = value;
-                                                },
-                                              );
-                                            },
-                                          );
-                                        },
-                                      )
+                                      Text(user['game'].toString())
                                     ],
                                   ),
                                   Row(
@@ -1292,7 +1272,7 @@ class _RegistrationList extends State<RegistrationList> {
                                       SizedBox(
                                         width: 32,
                                       ),
-                                      Text(user['favorite'])
+                                      Text(user['fav_game'])
                                     ],
                                   ),
                                   SizedBox(
@@ -1529,7 +1509,7 @@ class _RegistrationList extends State<RegistrationList> {
                                   .getadaptiveTextSize(context, 10))),
                     ),
                     DataCell(
-                      Text(user['favorite'].toString(),
+                      Text(user['fav_game'].toString(),
                           style: TextStyle(
                               fontSize: AdaptiveTextSize()
                                   .getadaptiveTextSize(context, 10))),
@@ -1621,6 +1601,7 @@ class _RegistrationList extends State<RegistrationList> {
                                         setState(
                                           () {
                                             game = value;
+                                            games1.add(game);
                                           },
                                         );
                                       },
@@ -1721,8 +1702,12 @@ class _RegistrationList extends State<RegistrationList> {
                             backgroundColor: Colors.green[800]),
                         child: Text("Submit"),
                         onPressed: () {
-                          playerCreate(_usernameController.text, game,
-                              registrated, state, favorite);
+                          setState(() {
+                            fav_game = game;
+                          });
+
+                          playerCreate(_usernameController.text, games1,
+                              registrated, state, fav_game);
                           _usernameController.clear();
 
                           setState(() {

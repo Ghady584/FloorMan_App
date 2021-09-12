@@ -1,4 +1,3 @@
-import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 
 //Copy this CustomPainter code to the Bottom of the File

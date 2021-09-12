@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:developer';
 
 import 'package:floor_manager/components/empty_content.dart';
+import 'package:floor_manager/screens/casino_layout_alt.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:parse_server_sdk_flutter/parse_server_sdk.dart';
@@ -94,6 +95,38 @@ class _WaitingListState extends State<WaitingList> {
         ..set('Status', stateObj);
 
       await customer.save();
+    }
+  }
+
+  void apprReq(String req, String userID) async {
+    if (req == '(Dinner Break Request)') {
+      QueryBuilder<ParseObject> query =
+          QueryBuilder<ParseObject>(ParseObject('States'))
+            ..whereEqualTo('state', 'Done');
+      var response = await query.query();
+      for (var item in response.results) {
+        var stateObj = item;
+
+        var customer = ParseObject('registrations')
+          ..objectId = userID
+          ..set('Status', stateObj);
+
+        await customer.save();
+      }
+      startDinner();
+    } else {
+      setState(
+        () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) {
+                return CasinoLayOutAlt();
+              },
+            ),
+          );
+        },
+      );
     }
   }
 
@@ -534,9 +567,6 @@ class _WaitingListState extends State<WaitingList> {
   @override
   void initState() {
     super.initState();
-
-    playersListGet();
-
     liveQuery();
   }
 
@@ -562,7 +592,6 @@ class _WaitingListState extends State<WaitingList> {
         body: EmptyContent(),
       );
     } else {
-      // try {
       return SafeArea(
         child: Scaffold(
           appBar: AppBar(
@@ -615,7 +644,6 @@ class _WaitingListState extends State<WaitingList> {
                     print(user['username']['Name']);
                     await getUser_app(user['username']['Name']);
                     setState(() {
-                      game = user['game'];
                       type = user['type'];
                       registrated = user['registrated_by'];
                       state = user['Status']['state'];
@@ -714,18 +742,20 @@ class _WaitingListState extends State<WaitingList> {
                                     style: TextButton.styleFrom(
                                         backgroundColor: Colors.green[800]),
                                     child: Text(
-                                      "Start Dinner Break",
+                                      "Approve Request",
                                     ),
                                     onPressed: () async {
-                                      await startDinner();
                                       Navigator.pop(context);
+
+                                      await apprReq(user['game'][0].toString(),
+                                          user['objectId']);
                                     },
                                   ),
                                   TextButton(
                                     style: TextButton.styleFrom(
                                         backgroundColor: Colors.green[800]),
                                     child: Text(
-                                      "Cancel registration",
+                                      "Cancel Request",
                                     ),
                                     onPressed: () {
                                       showDialog(
@@ -819,7 +849,7 @@ class _WaitingListState extends State<WaitingList> {
                                   .getadaptiveTextSize(context, 10))),
                     ),
                     DataCell(
-                      Text(user['game'].toString(),
+                      Text(user['game'][0].toString(),
                           style: TextStyle(
                               fontSize: AdaptiveTextSize()
                                   .getadaptiveTextSize(context, 10))),

@@ -31,10 +31,8 @@ class _TableScreenAltState extends State<TableScreenAlt> {
 
   void switchFavorite() {
     for (var user in users)
-      if (user['favorite'] == true) {
-        user['favorite'] = '❤';
-      } else {
-        user['favorite'] = " ";
+      if (user['fav_game'] == null) {
+        user['fav_game'] = '';
       }
   }
 
@@ -80,7 +78,6 @@ class _TableScreenAltState extends State<TableScreenAlt> {
         user1 = (res.data);
 
         getUser_appState(user1['results'][0]['objectId']);
-        log(user1.toString());
       });
     } else {
       throw "Unable to retrieve posts.";
@@ -145,6 +142,31 @@ class _TableScreenAltState extends State<TableScreenAlt> {
     }
   }
 
+  openUserState(String stateID) async {
+    var res = await http.put(
+      Uri.parse('https://parseapi.back4app.com/classes/States/' + stateID),
+      headers: {
+        'Content-type': 'application/json',
+        'Accept': 'application/json',
+        'X-Parse-Application-Id': 'ExYGOkRIyPwaQWO52Dtz6DPFp0UecekaMU9yaVLE',
+        'X-Parse-Master-Key': 'tViUC9E1rQXU6evqOiB1Ogn5M66SRp7Ug95MN2NO',
+        'X-Parse-REST-API-Key': '6UgE4EoZJ4pTMkzFvD1H5VVzRenZAsoEJ32yy82I'
+      },
+      body: jsonEncode({
+        'state': 'Not Registrated',
+      }),
+    );
+    if (res.statusCode == 200) {
+      // If the server did return a 201 CREATED response,
+      // then parse the JSON.
+      return jsonDecode(res.body);
+    } else {
+      // If the server did not return a 201 CREATED response,
+      // then throw an exception.
+      throw Exception(res.statusCode);
+    }
+  }
+
   void tableReady(String seatX) async {
     var res = await http.post(
       Uri.parse('https://parseapi.back4app.com/classes/Messages'),
@@ -196,6 +218,97 @@ class _TableScreenAltState extends State<TableScreenAlt> {
     await table.save();
   }
 
+  openSeat(String tableID, var chairName, String userName) async {
+    await getUser_app(userName);
+    openUserState(userStateId);
+
+    var table = ParseObject('Tables')..objectId = tableID;
+    switch (chairName) {
+      case 'Chair 1':
+        var table = ParseObject('Tables')
+          ..objectId = tableID
+          ..set('seat_1', '');
+
+        await table.save();
+
+        break;
+      case 'Chair 2':
+        var table = ParseObject('Tables')
+          ..objectId = tableID
+          ..set('seat_2', '');
+
+        await table.save();
+
+        break;
+      case 'Chair 3':
+        var table = ParseObject('Tables')
+          ..objectId = tableID
+          ..set('seat_3', '');
+
+        await table.save();
+
+        break;
+      case 'Chair 4':
+        var table = ParseObject('Tables')
+          ..objectId = tableID
+          ..set('seat_4', '');
+
+        await table.save();
+
+        break;
+      case 'Chair 5':
+        var table = ParseObject('Tables')
+          ..objectId = tableID
+          ..set('seat_5', '');
+
+        await table.save();
+
+        break;
+      case 'Chair 6':
+        var table = ParseObject('Tables')
+          ..objectId = tableID
+          ..set('seat_6', '');
+
+        await table.save();
+
+        break;
+      case 'Chair 7':
+        var table = ParseObject('Tables')
+          ..objectId = tableID
+          ..set('seat_7', '');
+
+        await table.save();
+
+        break;
+      case 'Chair 8':
+        var table = ParseObject('Tables')
+          ..objectId = tableID
+          ..set('seat_8', '');
+
+        await table.save();
+
+        break;
+      case 'Chair 9':
+        var table = ParseObject('Tables')
+          ..objectId = tableID
+          ..set('seat_9', '');
+
+        await table.save();
+
+        break;
+      case 'Chair 10':
+        var table = ParseObject('Tables')
+          ..objectId = tableID
+          ..set('seat_10', '');
+
+        await table.save();
+
+        break;
+    }
+    ;
+    await table.save();
+  }
+
   var seatedObj;
   getSeatedObj() async {
     QueryBuilder<ParseObject> queryPost =
@@ -204,9 +317,11 @@ class _TableScreenAltState extends State<TableScreenAlt> {
 
     var response = await queryPost.query();
     for (var item in response.results) {
-      setState(() {
-        seatedObj = item;
-      });
+      if (mounted) {
+        setState(() {
+          seatedObj = item;
+        });
+      }
     }
   }
 
@@ -354,6 +469,28 @@ class _TableScreenAltState extends State<TableScreenAlt> {
     }
   }
 
+  var tableSumId;
+  void closeSum(String tableNum) async {
+    QueryBuilder<ParseObject> queryPost =
+        QueryBuilder<ParseObject>(ParseObject('daily_sum'))
+          ..whereEqualTo('Table', tableNum)
+          ..whereEqualTo('End', '');
+    var response = await queryPost.query();
+    if (response.success) {
+      setState(() {
+        tableSumId = response.results[0]['objectId'];
+      });
+    } else {
+      log(response.error.toString());
+    }
+
+    var customer = ParseObject('daily_sum')
+      ..objectId = tableSumId
+      ..set('End', DateTime.now().toIso8601String());
+
+    await customer.save();
+  }
+
   checkTableSeats() async {
     QueryBuilder<ParseObject> queryPost =
         QueryBuilder<ParseObject>(ParseObject('Tables'))
@@ -384,13 +521,17 @@ class _TableScreenAltState extends State<TableScreenAlt> {
     }
   }
 
-  void setupTable() {
-    checkTable();
+  void setupTable() async {
+    await checkTableSeats();
     for (var chair in _chairs) {
       if (chair['name'] == "Chair 1") {
         if (widget.tableData['seat_1'] != '') {
           setState(() {
             chair['user'] = widget.tableData['seat_1'];
+          });
+        } else {
+          setState(() {
+            chair['user'] = null;
           });
         }
       }
@@ -399,12 +540,20 @@ class _TableScreenAltState extends State<TableScreenAlt> {
           setState(() {
             chair['user'] = widget.tableData['seat_2'];
           });
+        } else {
+          setState(() {
+            chair['user'] = null;
+          });
         }
       }
       if (chair['name'] == "Chair 3") {
         if (widget.tableData['seat_3'] != '') {
           setState(() {
             chair['user'] = widget.tableData['seat_3'];
+          });
+        } else {
+          setState(() {
+            chair['user'] = null;
           });
         }
       }
@@ -413,12 +562,20 @@ class _TableScreenAltState extends State<TableScreenAlt> {
           setState(() {
             chair['user'] = widget.tableData['seat_4'];
           });
+        } else {
+          setState(() {
+            chair['user'] = null;
+          });
         }
       }
       if (chair['name'] == "Chair 5") {
         if (widget.tableData['seat_5'] != '') {
           setState(() {
             chair['user'] = widget.tableData['seat_5'];
+          });
+        } else {
+          setState(() {
+            chair['user'] = null;
           });
         }
       }
@@ -427,12 +584,20 @@ class _TableScreenAltState extends State<TableScreenAlt> {
           setState(() {
             chair['user'] = widget.tableData['seat_6'];
           });
+        } else {
+          setState(() {
+            chair['user'] = null;
+          });
         }
       }
       if (chair['name'] == "Chair 7") {
         if (widget.tableData['seat_7'] != '') {
           setState(() {
             chair['user'] = widget.tableData['seat_7'];
+          });
+        } else {
+          setState(() {
+            chair['user'] = null;
           });
         }
       }
@@ -441,12 +606,20 @@ class _TableScreenAltState extends State<TableScreenAlt> {
           setState(() {
             chair['user'] = widget.tableData['seat_8'];
           });
+        } else {
+          setState(() {
+            chair['user'] = null;
+          });
         }
       }
       if (chair['name'] == "Chair 9") {
         if (widget.tableData['seat_9'] != '') {
           setState(() {
             chair['user'] = widget.tableData['seat_9'];
+          });
+        } else {
+          setState(() {
+            chair['user'] = null;
           });
         }
       }
@@ -455,13 +628,18 @@ class _TableScreenAltState extends State<TableScreenAlt> {
           setState(() {
             chair['user'] = widget.tableData['seat_10'];
           });
+        } else {
+          setState(() {
+            chair['user'] = null;
+          });
         }
       }
     }
   }
 
+  List games1;
+
   liveQuery() async {
-    //setupTable();
     final LiveQuery liveQuery = LiveQuery();
     setState(() {
       dateTodaySt = DateTime(
@@ -476,33 +654,63 @@ class _TableScreenAltState extends State<TableScreenAlt> {
       );
     });
 
-    QueryBuilder<ParseObject> query = QueryBuilder<ParseObject>(
+    QueryBuilder<ParseObject> queryPost = QueryBuilder<ParseObject>(
         ParseObject('registrations'))
       ..includeObject(['username', 'Status'])
-      ..whereContainedIn('game', [widget.tableData['game']])
       ..whereGreaterThan('registration_time', dateTodaySt)
       ..whereLessThan("registration_time", dateTodayEn.add(Duration(days: 1)));
 
-    var response = await query.query();
-    Subscription subscription = await liveQuery.client.subscribe(query);
-
+    var response = await queryPost.query();
     if (response.success) {
       setState(
         () {
-          users = response.results;
-          users.removeWhere((user) => user['Status']['state'] == 'Seated');
-          users.removeWhere((user) => user['Status']['state'] == 'Cancelled');
-          users.removeWhere((user) => user['Status']['state'] == 'Pending');
+          usersPlay = response.results;
+          usersPlay.removeWhere((user) => user['Status']['state'] == 'Seated');
+          usersPlay
+              .removeWhere((user) => user['Status']['state'] == 'Cancelled');
+          usersPlay.removeWhere((user) => user['Status']['state'] == 'Pending');
+          usersPlay.removeWhere(
+              (user) => !user['game'].contains(widget.tableData['game']));
         },
       );
-      if (mounted) {
-        switchFavorite();
-      }
+
+      switchFavorite();
     } else {
       print(response.error);
     }
+    QueryBuilder<ParseObject> queryPost2 = QueryBuilder<ParseObject>(
+        ParseObject('registrations'))
+      ..whereEqualTo('type', 'Waiting')
+      ..includeObject(['username', 'Status'])
+      ..whereGreaterThan('registration_time', dateTodaySt)
+      ..whereLessThan("registration_time", dateTodayEn.add(Duration(days: 1)));
 
-    subscription.on(LiveQueryEvent.create, (value) async {
+    var response2 = await queryPost2.query();
+    if (response2.success) {
+      setState(
+        () {
+          usersWait = response2.results;
+          usersWait.removeWhere((user) => user['Status']['state'] == 'Seated');
+          usersWait
+              .removeWhere((user) => user['Status']['state'] == 'Cancelled');
+
+          usersWait.removeWhere((user) => user['Status']['state'] == 'Done');
+          usersWait.removeWhere((user) =>
+              user['table'] !=
+              'table ' + widget.tableData['table_num'].toString());
+        },
+      );
+
+      switchFavorite();
+    } else {
+      print(response.error);
+    }
+    setState(() {
+      users = usersPlay + usersWait;
+    });
+    Subscription subscription1 = await liveQuery.client.subscribe(queryPost);
+
+    subscription1.on(LiveQueryEvent.create, (value) async {
       print('*** CREATE ***: ${DateTime.now().toString()}\n $value ');
       print((value as ParseObject).objectId);
       print((value as ParseObject).updatedAt);
@@ -510,14 +718,10 @@ class _TableScreenAltState extends State<TableScreenAlt> {
       print((value as ParseObject).get('objectId'));
       print((value as ParseObject).get('updatedAt'));
       print((value as ParseObject).get('createdAt'));
-
-      if (mounted) {
-        switchFavorite();
-        playersList();
-      }
+      playersList();
     });
 
-    subscription.on(LiveQueryEvent.update, (value) async {
+    subscription1.on(LiveQueryEvent.update, (value) async {
       print('*** UPDATE ***: ${DateTime.now().toString()}\n $value ');
       print((value as ParseObject).objectId);
       print((value as ParseObject).updatedAt);
@@ -525,14 +729,10 @@ class _TableScreenAltState extends State<TableScreenAlt> {
       print((value as ParseObject).get('objectId'));
       print((value as ParseObject).get('updatedAt'));
       print((value as ParseObject).get('createdAt'));
-
-      if (mounted) {
-        switchFavorite();
-        playersList();
-      }
+      playersList();
     });
 
-    subscription.on(LiveQueryEvent.enter, (value) async {
+    subscription1.on(LiveQueryEvent.enter, (value) async {
       print('*** ENTER ***: ${DateTime.now().toString()}\n $value ');
       print((value as ParseObject).objectId);
       print((value as ParseObject).updatedAt);
@@ -540,14 +740,10 @@ class _TableScreenAltState extends State<TableScreenAlt> {
       print((value as ParseObject).get('objectId'));
       print((value as ParseObject).get('updatedAt'));
       print((value as ParseObject).get('createdAt'));
-
-      if (mounted) {
-        switchFavorite();
-        playersList();
-      }
+      playersList();
     });
 
-    subscription.on(LiveQueryEvent.leave, (value) async {
+    subscription1.on(LiveQueryEvent.leave, (value) async {
       print('*** LEAVE ***: ${DateTime.now().toString()}\n $value ');
       print((value as ParseObject).objectId);
       print((value as ParseObject).updatedAt);
@@ -555,14 +751,10 @@ class _TableScreenAltState extends State<TableScreenAlt> {
       print((value as ParseObject).get('objectId'));
       print((value as ParseObject).get('updatedAt'));
       print((value as ParseObject).get('createdAt'));
-
-      if (mounted) {
-        switchFavorite();
-        playersList();
-      }
+      playersList();
     });
 
-    subscription.on(LiveQueryEvent.delete, (value) async {
+    subscription1.on(LiveQueryEvent.delete, (value) async {
       print('*** DELETE ***: ${DateTime.now().toString()}\n $value ');
       print((value as ParseObject).objectId);
       print((value as ParseObject).updatedAt);
@@ -570,13 +762,13 @@ class _TableScreenAltState extends State<TableScreenAlt> {
       print((value as ParseObject).get('objectId'));
       print((value as ParseObject).get('updatedAt'));
       print((value as ParseObject).get('createdAt'));
-
-      if (mounted) {
-        switchFavorite();
-        playersList();
-      }
+      print('jajajaja');
+      playersList();
     });
   }
+
+  var usersPlay = [];
+  var usersWait = [];
 
   void playersList() async {
     // await setupTable();
@@ -585,45 +777,81 @@ class _TableScreenAltState extends State<TableScreenAlt> {
       game = widget.tableData['game'];
       tableType = widget.tableData['table_type'];
 
-      dateTodaySt = DateTime(now.year, now.month, now.day, 9);
-      dateTodayEn = DateTime(now.year, now.month, now.day, 14);
+      dateTodaySt = DateTime(
+        now.year,
+        now.month,
+        now.day,
+      );
+      dateTodayEn = DateTime(
+        now.year,
+        now.month,
+        now.day,
+      );
     });
 
     QueryBuilder<ParseObject> queryPost = QueryBuilder<ParseObject>(
         ParseObject('registrations'))
       //  ..whereContainedIn('status', st)
-      ..whereContainedIn('game', [widget.tableData['game']])
       ..includeObject(['username', 'Status'])
       ..whereGreaterThan('registration_time', dateTodaySt)
       ..whereLessThan("registration_time", dateTodayEn.add(Duration(days: 1)));
 
     var response = await queryPost.query();
-    if (mounted) {
-      if (response.success) {
-        setState(
-          () {
-            users = response.results;
-            users.removeWhere((user) => user['Status']['state'] == 'Seated');
+    if (response.success) {
+      setState(
+        () {
+          usersPlay = response.results;
+          usersPlay.removeWhere((user) => user['Status']['state'] == 'Seated');
+          usersPlay
+              .removeWhere((user) => user['Status']['state'] == 'Cancelled');
+          usersPlay.removeWhere((user) => user['Status']['state'] == 'Pending');
+          users.removeWhere(
+              (user) => !user['game'].contains(widget.tableData['game']));
+        },
+      );
 
-            users.removeWhere((user) => user['Status']['state'] == 'Cancelled');
-          },
-        );
-
-        switchFavorite();
-      } else {
-        print(response.error);
-      }
+      switchFavorite();
+    } else {
+      print(response.error);
     }
+    QueryBuilder<ParseObject> queryPost2 = QueryBuilder<ParseObject>(
+        ParseObject('registrations'))
+      ..whereEqualTo('type', 'Waiting')
+      ..includeObject(['username', 'Status'])
+      ..whereGreaterThan('registration_time', dateTodaySt)
+      ..whereLessThan("registration_time", dateTodayEn.add(Duration(days: 1)));
+
+    var response2 = await queryPost2.query();
+    if (response2.success) {
+      setState(
+        () {
+          usersWait = response2.results;
+          usersWait.removeWhere((user) => user['Status']['state'] == 'Seated');
+          usersWait
+              .removeWhere((user) => user['Status']['state'] == 'Cancelled');
+
+          usersWait.removeWhere((user) => user['Status']['state'] == 'Done');
+          usersWait.removeWhere((user) =>
+              user['table'] !=
+              'table ' + widget.tableData['table_num'].toString());
+        },
+      );
+
+      switchFavorite();
+    } else {
+      print(response.error);
+    }
+    setState(() {
+      users = usersPlay + usersWait;
+    });
   }
 
   @override
   void initState() {
     super.initState();
-    //  playersList();
+    //
     this.readJson();
-    log(_chairs.toString());
     liveQuery();
-
     getSeatedObj();
   }
 
@@ -801,6 +1029,10 @@ class _TableScreenAltState extends State<TableScreenAlt> {
                                                           closeTable(
                                                               widget.tableData[
                                                                   'objectId']);
+                                                          closeSum(widget
+                                                              .tableData[
+                                                                  'table_num']
+                                                              .toString());
                                                         },
                                                       );
                                                       Navigator.pop(context);
@@ -830,6 +1062,10 @@ class _TableScreenAltState extends State<TableScreenAlt> {
                                                             closeTable(widget
                                                                     .tableData[
                                                                 'objectId']);
+                                                            closeSum(widget
+                                                                .tableData[
+                                                                    'table_num']
+                                                                .toString());
                                                           },
                                                         );
                                                         Navigator.pop(context);
@@ -916,9 +1152,9 @@ class _TableScreenAltState extends State<TableScreenAlt> {
                                 dragAnchor: DragAnchor.pointer,
                               ),
                               title: Text(users[index]["username"]['Name']),
-                              subtitle: Text(users[index]['game'] +
-                                  ' / ' +
-                                  users[index]['favorite'].toString()),
+                              subtitle: Text(users[index]['game'].toString() +
+                                  ' / fav: ' +
+                                  users[index]['fav_game'].toString()),
                             ),
                           );
                         },
@@ -965,7 +1201,7 @@ class _TableScreenAltState extends State<TableScreenAlt> {
                                                 )),
                                           )
                                         : Draggable(
-                                            data: chair["user"],
+                                            data: chair,
                                             child: SizedBox(
                                               width: 500 / 6,
                                               height: 500 / 6,
@@ -998,6 +1234,8 @@ class _TableScreenAltState extends State<TableScreenAlt> {
                                         data["username"]['Name'],
                                         data['objectId'],
                                         chair['name']);
+                                    playersList();
+
                                     ScaffoldMessenger.of(context).showSnackBar(
                                         SnackBar(
                                             content: Text(data["username"]
@@ -1058,7 +1296,11 @@ class _TableScreenAltState extends State<TableScreenAlt> {
                   ),
                 );
               },
-              onAccept: (data) {},
+              onAccept: (data) async {
+                await openSeat(
+                    widget.tableData['objectId'], data['name'], data['user']);
+                setupTable();
+              },
             ),
             right: 10,
             bottom: 10,

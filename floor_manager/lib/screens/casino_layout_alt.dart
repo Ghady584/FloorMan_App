@@ -1,12 +1,6 @@
-import 'dart:developer';
-
 import 'package:floor_manager/paints/table.dart';
-import 'package:floor_manager/screens/table_screen.dart';
 import 'package:flutter/material.dart';
-import 'table_screen.dart';
-import 'dart:convert';
 import 'dart:math' show pi;
-import 'package:flutter/services.dart';
 import 'package:parse_server_sdk/parse_server_sdk.dart';
 import 'table_screen_alt.dart';
 
@@ -25,6 +19,42 @@ class _CasinoLayOutAltState extends State<CasinoLayOutAlt> {
   String tableType;
   final List tableTypes = ['Main Table', 'Regular Table'];
   final List games = ['NLH 5/10', 'NLH 2/4', 'PLO 5/10', 'PLO 10/10'];
+
+  void openSum(String tableNum, String game) async {
+    var customer = ParseObject('daily_sum')
+      ..set('Table', tableNum)
+      ..set('Game', game)
+      ..set('Buy_in', '')
+      ..set('Start', DateTime.now())
+      ..set('End', '')
+      ..set('Duration', '')
+      ..set('Tip', '')
+      ..set('Tax', '')
+      ..set('day_date', DateTime.now());
+
+    await customer.save();
+  }
+
+  var tableSumId;
+
+  void closeSum(String tableNum, String game) async {
+    QueryBuilder<ParseObject> queryPost =
+        QueryBuilder<ParseObject>(ParseObject('daily_sum'))
+          ..whereEqualTo('Table', tableNum)
+          ..whereEqualTo('End', null);
+    var response = await queryPost.query();
+    if (response.success) {
+      setState(() {
+        tableSumId = response.results[0]['objectId'];
+      });
+    }
+
+    var customer = ParseObject('daily_sum')
+      ..objectId = tableSumId
+      ..set('End', DateTime.now());
+
+    await customer.save();
+  }
 
   void openTable(String tableID) async {
     var table = ParseObject('Tables')
@@ -148,12 +178,14 @@ class _CasinoLayOutAltState extends State<CasinoLayOutAlt> {
               TextButton(
                 style: TextButton.styleFrom(backgroundColor: Colors.green[800]),
                 child: Text("Submit"),
-                onPressed: () {
+                onPressed: () async {
                   setState(() {
                     table['game'] = game;
                     table['table_type'] = tableType;
                   });
                   openTable(tableId);
+                  await openSum(
+                      table['table_num'].toString(), table['game'].toString());
                   Navigator.pop(context);
 
                   Navigator.push(context, MaterialPageRoute(builder: (context) {

@@ -3,6 +3,7 @@ import 'package:data_table_2/data_table_2.dart';
 import '../components/responsive_text.dart';
 import 'package:parse_server_sdk/parse_server_sdk.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:intl/intl.dart';
 
 class Daily_Summary extends StatefulWidget {
   const Daily_Summary({Key key}) : super(key: key);
@@ -68,6 +69,10 @@ class _Daily_SummaryState extends State<Daily_Summary> {
     }
   }
 
+  String date(DateTime date) {
+    return DateFormat.yMEd().add_jms().format(date.toLocal());
+  }
+
   void delete(String formID) async {
     var deleteobj = ParseObject('daily_sum')..objectId = formID;
     await deleteobj.delete();
@@ -128,6 +133,15 @@ class _Daily_SummaryState extends State<Daily_Summary> {
   DateTime dateTodayEn;
   DateTime now = DateTime.now();
 
+  void switchEnd() {
+    for (var table in tables)
+      if (table['End'] == null) {
+        setState(() {
+          table['End'] = '';
+        });
+      }
+  }
+
   void refresh() async {
     setState(() {
       dateTodaySt = DateTime(now.year, now.month, now.day, 9);
@@ -170,6 +184,7 @@ class _Daily_SummaryState extends State<Daily_Summary> {
       setState(
         () {
           tables = response.results;
+          switchEnd();
         },
       );
     } else {
@@ -188,6 +203,7 @@ class _Daily_SummaryState extends State<Daily_Summary> {
       print((value as ParseObject).get('createdAt'));
       if (mounted) {
         refresh();
+        switchEnd();
       }
     });
 
@@ -201,6 +217,7 @@ class _Daily_SummaryState extends State<Daily_Summary> {
       print((value as ParseObject).get('createdAt'));
       if (mounted) {
         refresh();
+        switchEnd();
       }
     });
 
@@ -214,6 +231,7 @@ class _Daily_SummaryState extends State<Daily_Summary> {
       print((value as ParseObject).get('createdAt'));
       if (mounted) {
         refresh();
+        switchEnd();
       }
     });
 
@@ -227,6 +245,7 @@ class _Daily_SummaryState extends State<Daily_Summary> {
       print((value as ParseObject).get('createdAt'));
       if (mounted) {
         refresh();
+        switchEnd();
       }
     });
 
@@ -240,6 +259,7 @@ class _Daily_SummaryState extends State<Daily_Summary> {
       print((value as ParseObject).get('createdAt'));
       if (mounted) {
         refresh();
+        switchEnd();
       }
     });
   }
@@ -487,11 +507,8 @@ class _Daily_SummaryState extends State<Daily_Summary> {
                                   width: 32,
                                 ),
                                 Expanded(
-                                  child: TextField(
-                                    controller: this.controllerStart1,
-                                    decoration: InputDecoration(
-                                      hintText: table['Start'],
-                                    ),
+                                  child: Text(
+                                    date(table['Start']).toString(),
                                   ),
                                 )
                               ],
@@ -617,13 +634,13 @@ class _Daily_SummaryState extends State<Daily_Summary> {
                               .getadaptiveTextSize(context, 10))),
                 ),
                 DataCell(
-                  Text((table['Start']),
+                  Text((date(table['Start']).toString()),
                       style: TextStyle(
                           fontSize: AdaptiveTextSize()
                               .getadaptiveTextSize(context, 10))),
                 ),
                 DataCell(
-                  Text((table['End']),
+                  Text((table['End'].toString()),
                       style: TextStyle(
                           fontSize: AdaptiveTextSize()
                               .getadaptiveTextSize(context, 10))),
