@@ -403,20 +403,26 @@ class _CasinoLayOutAltState extends State<CasinoLayOutAlt> {
                                       )),
                                     ),
                                   ),
-                                  Center(
-                                      child: Text(
-                                    'Table :' +
-                                        table['table_num'].toString() +
-                                        '  ' +
-                                        table['game'] +
-                                        '  ' +
-                                        table['table_type'] +
-                                        '  ' +
-                                        getplayersnum(table).toString() +
-                                        "/" +
-                                        '10',
-                                    style: TextStyle(fontSize: 20),
-                                  )),
+                                  Positioned.fill(
+                                    child: Center(
+                                      child: Transform.rotate(
+                                        angle: -table["angle"] * pi / 180,
+                                        child: Text(
+                                          'T :' +
+                                              table['table_num'].toString() +
+                                              '\n' +
+                                              table['game'] +
+                                              '\n' +
+                                              // table['table_type'] +
+                                              // '  ' +
+                                              getplayersnum(table).toString() +
+                                              "/" +
+                                              '10',
+                                          style: TextStyle(fontSize: 20),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
