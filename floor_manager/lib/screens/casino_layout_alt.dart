@@ -1,4 +1,5 @@
 import 'package:floor_manager/paints/table.dart';
+import 'package:floor_manager/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'dart:math' show pi;
 import 'package:parse_server_sdk/parse_server_sdk.dart';
@@ -371,6 +372,16 @@ class _CasinoLayOutAltState extends State<CasinoLayOutAlt> {
     return SafeArea(
       child: Scaffold(
         appBar: AppBar(
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back),
+            onPressed: () {
+              Navigator.push(context, MaterialPageRoute(
+                builder: (context) {
+                  return HomePage();
+                },
+              ));
+            },
+          ),
           backgroundColor: Colors.green[800],
           title: Text('Layout'),
         ),

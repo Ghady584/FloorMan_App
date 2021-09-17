@@ -130,6 +130,25 @@ class _WaitingListState extends State<WaitingList> {
     }
   }
 
+  List playerTable;
+  void getTablePlayer() async {
+    QueryBuilder<ParseObject> query =
+        QueryBuilder<ParseObject>(ParseObject('Tables'));
+
+    var response = await query.query();
+    log(response.results.toString());
+    for (var item in response.results) {
+      playerTable.add(item['objectId']);
+
+      /*  var customer = ParseObject('registrations')
+        ..objectId = userID
+        ..set('Status', stateObj)
+        ..set('check_in_time', DateTime.now());
+
+      await customer.save();*/
+    }
+  }
+
   void playerCheckIn(
     String userID,
   ) async {
@@ -568,6 +587,7 @@ class _WaitingListState extends State<WaitingList> {
   void initState() {
     super.initState();
     liveQuery();
+    getTablePlayer();
   }
 
   @override
@@ -747,7 +767,7 @@ class _WaitingListState extends State<WaitingList> {
                                     onPressed: () async {
                                       Navigator.pop(context);
 
-                                      await apprReq(user['game'][0].toString(),
+                                      await apprReq(user['game'].toString(),
                                           user['objectId']);
                                     },
                                   ),
@@ -849,7 +869,7 @@ class _WaitingListState extends State<WaitingList> {
                                   .getadaptiveTextSize(context, 10))),
                     ),
                     DataCell(
-                      Text(user['game'][0].toString(),
+                      Text(user['game'].toString(),
                           style: TextStyle(
                               fontSize: AdaptiveTextSize()
                                   .getadaptiveTextSize(context, 10))),

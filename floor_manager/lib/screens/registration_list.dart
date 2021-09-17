@@ -35,17 +35,16 @@ class _RegistrationList extends State<RegistrationList> {
   bool filterPending = true;
   bool filterSeated = false;
   bool filterCancelled = false;
+  bool filterOnHold = false;
 
   var gamesList;
   String username;
   final List games = [];
-  List games1 = [];
   var game;
 
   final List cancels = ['Cancelled by floormanager', 'No Show'];
   String cancel;
   bool favorite = false;
-  String fav_game;
 
   final List types = ['Registration', 'Waiting'];
   String type;
@@ -76,10 +75,10 @@ class _RegistrationList extends State<RegistrationList> {
 
   void playerCreate(
     String name,
-    List game,
+    String game,
     String registrated,
     String status,
-    String favorite,
+    bool favorite,
   ) async {
     QueryBuilder<ParseObject> playerObj =
         QueryBuilder<ParseObject>(ParseObject('players'))
@@ -102,7 +101,7 @@ class _RegistrationList extends State<RegistrationList> {
           ..set('username', response_playerObj.result[0])
           ..set('game', game)
           ..set('type', 'Registration')
-          ..set('fav_game', favorite)
+          ..set('favorite', favorite)
           ..set('registrated_by', registrated)
           ..set('check_in_time', DateTime.now())
           ..set('registration_time', DateTime.now())
@@ -120,7 +119,7 @@ class _RegistrationList extends State<RegistrationList> {
           ..set('username', response_playerObj.result[0])
           ..set('game', game)
           ..set('type', 'Registration')
-          ..set('fav_game', favorite)
+          ..set('favorite', favorite)
           ..set('registrated_by', registrated)
           ..set('check_in_time', DateTime.now())
           ..set('registration_time', DateTime.now())
@@ -194,18 +193,32 @@ class _RegistrationList extends State<RegistrationList> {
     }
   }
 
-  void playerCheckIn(
-    String userID,
-  ) async {
+  List playerRegs = [];
+  var stateObj;
+  void playerCheckIn(var userObj) async {
     QueryBuilder<ParseObject> query =
         QueryBuilder<ParseObject>(ParseObject('States'))
           ..whereEqualTo('state', 'Checked-In');
     var response = await query.query();
     for (var item in response.results) {
-      var stateObj = item;
+      setState(() {
+        stateObj = item;
+      });
+    }
 
+    QueryBuilder<ParseObject> query1 =
+        QueryBuilder<ParseObject>(ParseObject('registrations'))
+          ..whereEqualTo('username', userObj);
+    var response1 = await query1.query();
+    for (var item in response1.results) {
+      setState(() {
+        playerRegs.add(item['objectId']);
+      });
+    }
+
+    for (var item in playerRegs) {
       var customer = ParseObject('registrations')
-        ..objectId = userID
+        ..objectId = item
         ..set('Status', stateObj)
         ..set('check_in_time', DateTime.now());
 
@@ -511,6 +524,11 @@ class _RegistrationList extends State<RegistrationList> {
           users.removeWhere((user) => user['Status']['state'] == 'Cancelled');
         });
       }
+      if (filterOnHold == false) {
+        setState(() {
+          users.removeWhere((user) => user['Status']['state'] == 'On-Hold');
+        });
+      }
     }
   }
 
@@ -613,17 +631,20 @@ class _RegistrationList extends State<RegistrationList> {
     var response = await query.query();
     setState(() {
       users = response.results;
-      switchFavorite();
-      switchCancelReason();
-      switchCancelTime();
-      switchComment();
-      switchRegTime();
-      switchSeat();
-      switchSeatTime();
-      switchTable();
 
-      users.removeWhere((user) => user['Status']['state'] == 'Seated');
-      users.removeWhere((user) => user['Status']['state'] == 'Cancelled');
+      if (users != null) {
+        switchFavorite();
+        switchCancelReason();
+        switchCancelTime();
+        switchComment();
+        switchRegTime();
+        switchSeat();
+        switchSeatTime();
+        switchTable();
+        users.removeWhere((user) => user['Status']['state'] == 'Seated');
+        users.removeWhere((user) => user['Status']['state'] == 'Cancelled');
+        users.removeWhere((user) => user['Status']['state'] == 'On-Hold');
+      }
     });
 
     Subscription subscription = await liveQuery.client.subscribe(query);
@@ -794,7 +815,6 @@ class _RegistrationList extends State<RegistrationList> {
                                       setState(
                                         () {
                                           game = value;
-                                          games1.add(game);
                                         },
                                       );
                                     },
@@ -895,13 +915,8 @@ class _RegistrationList extends State<RegistrationList> {
                           backgroundColor: Colors.green[800]),
                       child: Text("Submit"),
                       onPressed: () {
-                        if (favorite == true) {
-                          setState(() {
-                            fav_game = game;
-                          });
-                        }
-                        playerCreate(_usernameController.text, games1,
-                            registrated, state, fav_game);
+                        playerCreate(_usernameController.text, game,
+                            registrated, state, favorite);
                         _usernameController.clear();
 
                         setState(() {
@@ -1100,6 +1115,21 @@ class _RegistrationList extends State<RegistrationList> {
                               ),
                               Row(
                                 children: [
+                                  Text('On-Hold'),
+                                  Checkbox(
+                                    value: filterOnHold,
+                                    onChanged: (value) {
+                                      setState(
+                                        () {
+                                          filterOnHold = value;
+                                        },
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ),
+                              Row(
+                                children: [
                                   Text('Cancelled'),
                                   Checkbox(
                                     value: filterCancelled,
@@ -1272,7 +1302,7 @@ class _RegistrationList extends State<RegistrationList> {
                                       SizedBox(
                                         width: 32,
                                       ),
-                                      Text(user['fav_game'])
+                                      Text(user['favorite'])
                                     ],
                                   ),
                                   SizedBox(
@@ -1471,7 +1501,7 @@ class _RegistrationList extends State<RegistrationList> {
                                       "Check-In Player",
                                     ),
                                     onPressed: () async {
-                                      playerCheckIn(user['objectId']);
+                                      playerCheckIn(user['username']);
                                       checkPlayerIn();
                                       Navigator.pop(context);
                                     },
@@ -1509,7 +1539,7 @@ class _RegistrationList extends State<RegistrationList> {
                                   .getadaptiveTextSize(context, 10))),
                     ),
                     DataCell(
-                      Text(user['fav_game'].toString(),
+                      Text(user['favorite'].toString(),
                           style: TextStyle(
                               fontSize: AdaptiveTextSize()
                                   .getadaptiveTextSize(context, 10))),
@@ -1601,7 +1631,6 @@ class _RegistrationList extends State<RegistrationList> {
                                         setState(
                                           () {
                                             game = value;
-                                            games1.add(game);
                                           },
                                         );
                                       },
@@ -1702,12 +1731,8 @@ class _RegistrationList extends State<RegistrationList> {
                             backgroundColor: Colors.green[800]),
                         child: Text("Submit"),
                         onPressed: () {
-                          setState(() {
-                            fav_game = game;
-                          });
-
-                          playerCreate(_usernameController.text, games1,
-                              registrated, state, fav_game);
+                          playerCreate(_usernameController.text, game,
+                              registrated, state, favorite);
                           _usernameController.clear();
 
                           setState(() {

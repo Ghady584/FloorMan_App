@@ -31,9 +31,12 @@ class _TableScreenAltState extends State<TableScreenAlt> {
 
   void switchFavorite() {
     for (var user in users)
-      if (user['fav_game'] == null) {
-        user['fav_game'] = '';
+      if (user['favorite'] == true) {
+        user['favorite'] = '❤';
+      } else {
+        user['favorite'] = "";
       }
+    log('favvvvvvvvvvvv');
   }
 
   void changeTable(String tableID) async {
@@ -47,7 +50,7 @@ class _TableScreenAltState extends State<TableScreenAlt> {
       ..set('table_type', tableType);
 
     await table.save();
-    // switchFavorite();
+    switchFavorite();
   }
 
   var user1;
@@ -325,8 +328,24 @@ class _TableScreenAltState extends State<TableScreenAlt> {
     }
   }
 
-  void seatPlayer(
-      String tableID, String userName, String userID, String chairName) async {
+  var onHoldObj;
+  getonHoldObj() async {
+    QueryBuilder<ParseObject> queryPost =
+        QueryBuilder<ParseObject>(ParseObject('States'))
+          ..whereEqualTo('state', 'On-Hold');
+
+    var response = await queryPost.query();
+    for (var item in response.results) {
+      if (mounted) {
+        setState(() {
+          onHoldObj = item;
+        });
+      }
+    }
+  }
+
+  void seatPlayer(String tableID, String userName, String userID,
+      String chairName, var userObj) async {
     await getUser_app(userName);
 
     var player = ParseObject('registrations')
@@ -442,6 +461,7 @@ class _TableScreenAltState extends State<TableScreenAlt> {
 
         break;
     }
+    onHoldPlayer(userObj);
   }
 
   var tables;
@@ -664,13 +684,20 @@ class _TableScreenAltState extends State<TableScreenAlt> {
     if (response.success) {
       setState(
         () {
-          usersPlay = response.results;
-          usersPlay.removeWhere((user) => user['Status']['state'] == 'Seated');
-          usersPlay
-              .removeWhere((user) => user['Status']['state'] == 'Cancelled');
-          usersPlay.removeWhere((user) => user['Status']['state'] == 'Pending');
-          usersPlay.removeWhere(
-              (user) => !user['game'].contains(widget.tableData['game']));
+          if (usersPlay != null) {
+            usersPlay = response.results;
+            usersPlay
+                .removeWhere((user) => user['Status']['state'] == 'Seated');
+            usersPlay
+                .removeWhere((user) => user['Status']['state'] == 'On-Hold');
+
+            usersPlay
+                .removeWhere((user) => user['Status']['state'] == 'Cancelled');
+            usersPlay
+                .removeWhere((user) => user['Status']['state'] == 'Pending');
+            usersPlay.removeWhere(
+                (user) => !user['game'].contains(widget.tableData['game']));
+          }
         },
       );
 
@@ -690,23 +717,29 @@ class _TableScreenAltState extends State<TableScreenAlt> {
       setState(
         () {
           usersWait = response2.results;
-          usersWait.removeWhere((user) => user['Status']['state'] == 'Seated');
-          usersWait
-              .removeWhere((user) => user['Status']['state'] == 'Cancelled');
+          if (usersWait != null) {
+            usersWait
+                .removeWhere((user) => user['Status']['state'] == 'Seated');
+            usersWait
+                .removeWhere((user) => user['Status']['state'] == 'Cancelled');
 
-          usersWait.removeWhere((user) => user['Status']['state'] == 'Done');
-          usersWait.removeWhere((user) =>
-              user['table'] !=
-              'table ' + widget.tableData['table_num'].toString());
+            usersWait.removeWhere((user) => user['Status']['state'] == 'Done');
+            usersWait.removeWhere((user) =>
+                user['table'] !=
+                'table ' + widget.tableData['table_num'].toString());
+          }
         },
       );
-
-      switchFavorite();
     } else {
       print(response.error);
     }
     setState(() {
-      users = usersPlay + usersWait;
+      if (usersWait == null) {
+        users = usersPlay;
+      } else {
+        users = usersPlay + usersWait;
+      }
+      switchFavorite();
     });
     Subscription subscription1 = await liveQuery.client.subscribe(queryPost);
 
@@ -767,48 +800,84 @@ class _TableScreenAltState extends State<TableScreenAlt> {
     });
   }
 
+  List playerHold = [];
+  void onHoldPlayer(var userObj) async {
+    QueryBuilder<ParseObject> query =
+        QueryBuilder<ParseObject>(ParseObject('registrations'))
+          ..whereEqualTo('username', userObj)
+          ..whereNotEqualTo('Status', seatedObj);
+
+    var response = await query.query();
+    for (var item in response.results) {
+      playerHold.add(item['objectId']);
+
+      for (var item in playerHold) {
+        var customer = ParseObject('registrations')
+          ..objectId = item
+          ..set('Status', onHoldObj);
+
+        await customer.save();
+      }
+
+      /*  var customer = ParseObject('registrations')
+        ..objectId = userID
+        ..set('Status', stateObj)
+        ..set('check_in_time', DateTime.now());
+
+      await customer.save();*/
+    }
+  }
+
   var usersPlay = [];
   var usersWait = [];
 
   void playersList() async {
     // await setupTable();
+    if (mounted) {
+      setState(() {
+        game = widget.tableData['game'];
+        tableType = widget.tableData['table_type'];
 
-    setState(() {
-      game = widget.tableData['game'];
-      tableType = widget.tableData['table_type'];
-
-      dateTodaySt = DateTime(
-        now.year,
-        now.month,
-        now.day,
-      );
-      dateTodayEn = DateTime(
-        now.year,
-        now.month,
-        now.day,
-      );
-    });
+        dateTodaySt = DateTime(
+          now.year,
+          now.month,
+          now.day,
+        );
+        dateTodayEn = DateTime(
+          now.year,
+          now.month,
+          now.day,
+        );
+      });
+    }
 
     QueryBuilder<ParseObject> queryPost = QueryBuilder<ParseObject>(
         ParseObject('registrations'))
-      //  ..whereContainedIn('status', st)
+      ..whereEqualTo('game', widget.tableData['game'])
       ..includeObject(['username', 'Status'])
       ..whereGreaterThan('registration_time', dateTodaySt)
       ..whereLessThan("registration_time", dateTodayEn.add(Duration(days: 1)));
 
     var response = await queryPost.query();
     if (response.success) {
-      setState(
-        () {
-          usersPlay = response.results;
-          usersPlay.removeWhere((user) => user['Status']['state'] == 'Seated');
-          usersPlay
-              .removeWhere((user) => user['Status']['state'] == 'Cancelled');
-          usersPlay.removeWhere((user) => user['Status']['state'] == 'Pending');
-          users.removeWhere(
-              (user) => !user['game'].contains(widget.tableData['game']));
-        },
-      );
+      if (mounted) {
+        setState(
+          () {
+            usersPlay = response.results;
+            usersPlay
+                .removeWhere((user) => user['Status']['state'] == 'Seated');
+            usersPlay
+                .removeWhere((user) => user['Status']['state'] == 'On-Hold');
+
+            usersPlay
+                .removeWhere((user) => user['Status']['state'] == 'Cancelled');
+            usersPlay
+                .removeWhere((user) => user['Status']['state'] == 'Pending');
+            users.removeWhere(
+                (user) => !user['game'].contains(widget.tableData['game']));
+          },
+        );
+      }
 
       switchFavorite();
     } else {
@@ -823,27 +892,38 @@ class _TableScreenAltState extends State<TableScreenAlt> {
 
     var response2 = await queryPost2.query();
     if (response2.success) {
-      setState(
-        () {
-          usersWait = response2.results;
-          usersWait.removeWhere((user) => user['Status']['state'] == 'Seated');
-          usersWait
-              .removeWhere((user) => user['Status']['state'] == 'Cancelled');
+      if (mounted) {
+        setState(
+          () {
+            if (usersWait != null) {
+              usersWait = response2.results;
+              usersWait
+                  .removeWhere((user) => user['Status']['state'] == 'Seated');
+              usersWait.removeWhere(
+                  (user) => user['Status']['state'] == 'Cancelled');
 
-          usersWait.removeWhere((user) => user['Status']['state'] == 'Done');
-          usersWait.removeWhere((user) =>
-              user['table'] !=
-              'table ' + widget.tableData['table_num'].toString());
-        },
-      );
-
-      switchFavorite();
+              usersWait
+                  .removeWhere((user) => user['Status']['state'] == 'Done');
+              usersWait.removeWhere((user) =>
+                  user['table'] !=
+                  'table ' + widget.tableData['table_num'].toString());
+            }
+          },
+        );
+      }
     } else {
       print(response.error);
     }
-    setState(() {
-      users = usersPlay + usersWait;
-    });
+    if (mounted) {
+      setState(() {
+        if (usersWait == null) {
+          users = usersPlay;
+        } else {
+          users = usersPlay + usersWait;
+        }
+        switchFavorite();
+      });
+    }
   }
 
   @override
@@ -853,6 +933,7 @@ class _TableScreenAltState extends State<TableScreenAlt> {
     this.readJson();
     liveQuery();
     getSeatedObj();
+    getonHoldObj();
   }
 
   Future<void> readJson() async {
@@ -897,6 +978,16 @@ class _TableScreenAltState extends State<TableScreenAlt> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.push(context, MaterialPageRoute(
+              builder: (context) {
+                return CasinoLayOutAlt();
+              },
+            ));
+          },
+        ),
         actions: [
           Builder(
             builder: (context) => Center(
@@ -1153,8 +1244,8 @@ class _TableScreenAltState extends State<TableScreenAlt> {
                               ),
                               title: Text(users[index]["username"]['Name']),
                               subtitle: Text(users[index]['game'].toString() +
-                                  ' / fav: ' +
-                                  users[index]['fav_game'].toString()),
+                                  ' / ' +
+                                  users[index]['favorite']),
                             ),
                           );
                         },
@@ -1233,7 +1324,9 @@ class _TableScreenAltState extends State<TableScreenAlt> {
                                         widget.tableData['objectId'],
                                         data["username"]['Name'],
                                         data['objectId'],
-                                        chair['name']);
+                                        chair['name'],
+                                        data["username"]);
+
                                     playersList();
 
                                     ScaffoldMessenger.of(context).showSnackBar(
@@ -1266,7 +1359,8 @@ class _TableScreenAltState extends State<TableScreenAlt> {
                                         widget.tableData['objectId'],
                                         data["username"]['Name'],
                                         data['objectId'],
-                                        chair['name']);
+                                        chair['name'],
+                                        data["username"]);
                                     ScaffoldMessenger.of(context).showSnackBar(
                                         SnackBar(
                                             content: Text(data["username"]
