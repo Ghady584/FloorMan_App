@@ -55,7 +55,13 @@ class _RegistrationList extends State<RegistrationList> {
     'Reception'
   ];
   String registrated;
-  final List status = ['Pending', 'Seated', 'Checked-In', 'Cancelled'];
+  final List status = [
+    'Pending',
+    'Seated',
+    'Checked-In',
+    'Cancelled',
+    'On-Hold'
+  ];
   String state;
   var players;
   String playerID;

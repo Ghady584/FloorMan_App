@@ -493,8 +493,7 @@ class _TableScreenAltState extends State<TableScreenAlt> {
   void closeSum(String tableNum) async {
     QueryBuilder<ParseObject> queryPost =
         QueryBuilder<ParseObject>(ParseObject('daily_sum'))
-          ..whereEqualTo('Table', tableNum)
-          ..whereEqualTo('End', '');
+          ..whereEqualTo('Table', tableNum);
     var response = await queryPost.query();
     if (response.success) {
       setState(() {
@@ -506,7 +505,7 @@ class _TableScreenAltState extends State<TableScreenAlt> {
 
     var customer = ParseObject('daily_sum')
       ..objectId = tableSumId
-      ..set('End', DateTime.now().toIso8601String());
+      ..set('End', DateTime.now());
 
     await customer.save();
   }

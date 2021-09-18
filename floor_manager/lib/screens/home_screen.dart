@@ -217,6 +217,7 @@ class _HomePageState extends State<HomePage> {
     } else {
       return Scaffold(
         appBar: AppBar(
+          automaticallyImplyLeading: false,
           backgroundColor: Colors.green[800],
           title: Text('Welcome'),
         ),

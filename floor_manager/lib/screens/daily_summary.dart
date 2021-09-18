@@ -135,7 +135,11 @@ class _Daily_SummaryState extends State<Daily_Summary> {
 
   void switchEnd() {
     for (var table in tables)
-      if (table['End'] == null) {
+      if (table['End'] != null) {
+        setState(() {
+          table['End'] = date(table['End']);
+        });
+      } else {
         setState(() {
           table['End'] = '';
         });
@@ -640,7 +644,7 @@ class _Daily_SummaryState extends State<Daily_Summary> {
                               .getadaptiveTextSize(context, 10))),
                 ),
                 DataCell(
-                  Text((table['End'].toString()),
+                  Text((table['End']).toString(),
                       style: TextStyle(
                           fontSize: AdaptiveTextSize()
                               .getadaptiveTextSize(context, 10))),
@@ -665,56 +669,6 @@ class _Daily_SummaryState extends State<Daily_Summary> {
                 ),
               ],
             ),
-          DataRow2(cells: [
-            DataCell(TextField(
-              controller: this.controllerTable,
-              decoration: InputDecoration(
-                hintText: 'Table',
-              ),
-            )),
-            DataCell(TextField(
-              controller: this.controllerGame,
-              decoration: InputDecoration(
-                hintText: 'Game',
-              ),
-            )),
-            DataCell(TextField(
-              controller: this.controllerBuyIn,
-              decoration: InputDecoration(
-                hintText: 'Buy in',
-              ),
-            )),
-            DataCell(TextField(
-              controller: this.controllerStart,
-              decoration: InputDecoration(
-                hintText: 'Start',
-              ),
-            )),
-            DataCell(TextField(
-              controller: this.controllerEnd,
-              decoration: InputDecoration(
-                hintText: 'End',
-              ),
-            )),
-            DataCell(TextField(
-              controller: this.controllerDuration,
-              decoration: InputDecoration(
-                hintText: 'Duration',
-              ),
-            )),
-            DataCell(TextField(
-              controller: this.controllerTip,
-              decoration: InputDecoration(
-                hintText: 'Tip',
-              ),
-            )),
-            DataCell(TextField(
-              controller: this.controllerTax,
-              decoration: InputDecoration(
-                hintText: 'Tax',
-              ),
-            )),
-          ])
         ],
       );
     }
@@ -745,24 +699,6 @@ class _Daily_SummaryState extends State<Daily_Summary> {
         ),
       ),
       body: ifTable(),
-      floatingActionButton: FloatingActionButton(
-          backgroundColor: Colors.green[800],
-          child: Icon(
-            FontAwesomeIcons.plus,
-            color: Colors.white,
-          ),
-          onPressed: () async {
-            await create();
-            refresh();
-            controllerTable.clear();
-            controllerGame.clear();
-            controllerBuyIn.clear();
-            controllerStart.clear();
-            controllerEnd.clear();
-            controllerDuration.clear();
-            controllerTip.clear();
-            controllerTax.clear();
-          }),
     ));
   }
 }

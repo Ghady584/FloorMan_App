@@ -27,7 +27,7 @@ class _CasinoLayOutAltState extends State<CasinoLayOutAlt> {
       ..set('Game', game)
       ..set('Buy_in', '')
       ..set('Start', DateTime.now())
-      ..set('End', '')
+//      ..set('End', '')
       ..set('Duration', '')
       ..set('Tip', '')
       ..set('Tax', '')
@@ -41,8 +41,7 @@ class _CasinoLayOutAltState extends State<CasinoLayOutAlt> {
   void closeSum(String tableNum, String game) async {
     QueryBuilder<ParseObject> queryPost =
         QueryBuilder<ParseObject>(ParseObject('daily_sum'))
-          ..whereEqualTo('Table', tableNum)
-          ..whereEqualTo('End', null);
+          ..whereEqualTo('Table', tableNum);
     var response = await queryPost.query();
     if (response.success) {
       setState(() {
