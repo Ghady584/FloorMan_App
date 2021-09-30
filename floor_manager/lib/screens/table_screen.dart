@@ -208,7 +208,7 @@ class _TablePageState extends State<TablePage> {
           "className": "_User",
           "objectId": user['results'][0]['objectId'],
         },
-        'Message': 'Your Table is ready "$seatX"',
+        'Message': 'You have been seated at: "$seatX"',
       }),
     );
     if (res.statusCode == 201) {

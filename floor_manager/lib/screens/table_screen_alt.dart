@@ -39,6 +39,24 @@ class _TableScreenAltState extends State<TableScreenAlt> {
     log('favvvvvvvvvvvv');
   }
 
+  void playerCancel(String userID, String cancel) async {
+    QueryBuilder<ParseObject> query =
+        QueryBuilder<ParseObject>(ParseObject('States'))
+          ..whereEqualTo('state', 'Cancelled');
+    var response = await query.query();
+    for (var item in response.results) {
+      var stateObj = item;
+
+      var customer = ParseObject('registrations')
+        ..objectId = userID
+        ..set('cancellation_time', DateTime.now())
+        ..set('cancellation_reason', cancel)
+        ..set('Status', stateObj);
+
+      await customer.save();
+    }
+  }
+
   void changeTable(String tableID) async {
     setState(() {
       widget.tableData['game'] = game;
@@ -120,7 +138,7 @@ class _TableScreenAltState extends State<TableScreenAlt> {
     }
   }
 
-  seatUserState(String stateID) async {
+  seatUserState(String stateID, String game) async {
     var res = await http.put(
       Uri.parse('https://parseapi.back4app.com/classes/States/' + stateID),
       headers: {
@@ -130,9 +148,7 @@ class _TableScreenAltState extends State<TableScreenAlt> {
         'X-Parse-Master-Key': 'tViUC9E1rQXU6evqOiB1Ogn5M66SRp7Ug95MN2NO',
         'X-Parse-REST-API-Key': '6UgE4EoZJ4pTMkzFvD1H5VVzRenZAsoEJ32yy82I'
       },
-      body: jsonEncode({
-        'state': 'Seated',
-      }),
+      body: jsonEncode({'state': 'Seated', 'game': game}),
     );
     if (res.statusCode == 200) {
       // If the server did return a 201 CREATED response,
@@ -192,7 +208,7 @@ class _TableScreenAltState extends State<TableScreenAlt> {
     if (res.statusCode == 201) {
       // If the server did return a 201 CREATED response,
       // then parse the JSON.
-      seatUserState(userStateId);
+      seatUserState(userStateId, widget.tableData['game']);
       return jsonDecode(res.body);
     } else {
       // If the server did not return a 201 CREATED response,
@@ -221,9 +237,45 @@ class _TableScreenAltState extends State<TableScreenAlt> {
     await table.save();
   }
 
+  String finishId;
+  var finishList;
+
+  void finishReg(String userName) async {
+    QueryBuilder<ParseObject> queryPost = QueryBuilder<ParseObject>(
+        ParseObject('registrations'))
+      ..whereEqualTo('game', widget.tableData['game'])
+      ..includeObject(['username', 'Status'])
+      ..whereGreaterThan('registration_time', dateTodaySt)
+      ..whereLessThan("registration_time", dateTodayEn.add(Duration(days: 1)));
+
+    var response = await queryPost.query();
+    if (response.success) {
+      if (mounted) {
+        setState(() {
+          finishList = response.results;
+          finishList
+              .removeWhere((item) => item['username']['Name'] != userName);
+        });
+
+        for (var item in response.results) {
+          setState(() {
+            finishId = item['objectId'];
+          });
+        }
+      }
+    }
+
+    var table = ParseObject('registrations')
+      ..objectId = finishId
+      ..set('Status', finishedObj);
+
+    await table.save();
+  }
+
   openSeat(String tableID, var chairName, String userName) async {
     await getUser_app(userName);
     openUserState(userStateId);
+    finishReg(userName);
 
     var table = ParseObject('Tables')..objectId = tableID;
     switch (chairName) {
@@ -323,6 +375,23 @@ class _TableScreenAltState extends State<TableScreenAlt> {
       if (mounted) {
         setState(() {
           seatedObj = item;
+        });
+      }
+    }
+  }
+
+  var finishedObj;
+
+  getFinishedObj() async {
+    QueryBuilder<ParseObject> queryPost =
+        QueryBuilder<ParseObject>(ParseObject('States'))
+          ..whereEqualTo('state', 'Finished');
+
+    var response = await queryPost.query();
+    for (var item in response.results) {
+      if (mounted) {
+        setState(() {
+          finishedObj = item;
         });
       }
     }
@@ -656,6 +725,33 @@ class _TableScreenAltState extends State<TableScreenAlt> {
     }
   }
 
+  List playerGames = [];
+  var map = {};
+
+  void playerothergames(var userObj) async {
+    QueryBuilder<ParseObject> query1 =
+        QueryBuilder<ParseObject>(ParseObject('registrations'))
+          ..whereEqualTo('username', userObj);
+    var response1 = await query1.query();
+    for (var item in response1.results) {
+      await setState(() {
+        playerGames.add(item['game']);
+      });
+      log(playerGames.toString());
+    }
+    setState(() {
+      playerGames.removeWhere((item) => item == game);
+      playerGames.removeWhere((item) => item == '(Table change)');
+      playerGames.removeWhere((item) => item == '(Dinner Break Request)');
+      log(playerGames.toString());
+
+      map[userObj['Name']] =
+          playerGames.toString().replaceAll('[', '').replaceAll(']', '');
+      playerGames.clear();
+      log(map.toString());
+    });
+  }
+
   List games1;
 
   liveQuery() async {
@@ -687,8 +783,6 @@ class _TableScreenAltState extends State<TableScreenAlt> {
             usersPlay = response.results;
             usersPlay
                 .removeWhere((user) => user['Status']['state'] == 'Seated');
-            usersPlay
-                .removeWhere((user) => user['Status']['state'] == 'On-Hold');
 
             usersPlay
                 .removeWhere((user) => user['Status']['state'] == 'Cancelled');
@@ -737,9 +831,25 @@ class _TableScreenAltState extends State<TableScreenAlt> {
         users = usersPlay;
       } else {
         users = usersPlay + usersWait;
+        users.sort((a, b) {
+          var adate = a['registration_time']; //before -> var adate = a.expiry;
+          var bdate = b['registration_time']; //before -> var bdate = b.expiry;
+          return adate.compareTo(
+              bdate); //to get the order other way just switch `adate & bdate`
+        });
+        users.sort((a, b) {
+          var adate = a['game']; //before -> var adate = a.expiry;
+          var bdate = b['game']; //before -> var bdate = b.expiry;
+          return adate.compareTo(
+              bdate); //to get the order other way just switch `adate & bdate`
+        });
       }
       switchFavorite();
     });
+    for (var user in users) {
+      playerothergames(user['username']);
+    }
+
     Subscription subscription1 = await liveQuery.client.subscribe(queryPost);
 
     subscription1.on(LiveQueryEvent.create, (value) async {
@@ -794,7 +904,6 @@ class _TableScreenAltState extends State<TableScreenAlt> {
       print((value as ParseObject).get('objectId'));
       print((value as ParseObject).get('updatedAt'));
       print((value as ParseObject).get('createdAt'));
-      print('jajajaja');
       playersList();
     });
   }
@@ -824,6 +933,177 @@ class _TableScreenAltState extends State<TableScreenAlt> {
         ..set('check_in_time', DateTime.now());
 
       await customer.save();*/
+    }
+  }
+
+  bool seatList = true;
+
+  Widget seatWidget() {
+    if (seatList == true) {
+      return Expanded(
+        child: Column(
+          children: [
+            for (var user in users)
+              Card(
+                color: Colors.grey[100],
+                margin: EdgeInsets.all(2),
+                elevation: 0,
+                child: ListTile(
+                    tileColor: Colors.grey[200],
+                    leading: Draggable(
+                      data: user,
+                      child: CircleAvatar(
+                          backgroundColor: Colors.grey[300],
+                          child: Icon(Icons.person, color: Colors.red)),
+                      feedback: CircleAvatar(
+                          backgroundColor: Colors.grey[300],
+                          child: Icon(Icons.person, color: Colors.red)),
+                      childWhenDragging: CircleAvatar(
+                          backgroundColor: Colors.grey[600],
+                          child: Icon(Icons.person, color: Colors.red)),
+                      dragAnchor: DragAnchor.pointer,
+                    ),
+                    title: Text(user["username"]['Name']),
+                    subtitle: map[user["username"]['Name']] != null
+                        ? Text(user['game'].toString() +
+                            '/ ' +
+                            user['favorite'] +
+                            'Other games: ' +
+                            map[user["username"]['Name']] +
+                            ' / ' +
+                            'State: ' +
+                            user['Status']['state'])
+                        : CircularProgressIndicator()),
+              ),
+          ],
+        ),
+      );
+    } else {
+      return Expanded(
+          child: Column(
+        children: [
+          Card(
+            color: Colors.grey[100],
+            margin: EdgeInsets.all(2),
+            elevation: 0,
+            child: ListTile(
+              tileColor: Colors.grey[200],
+              leading: CircleAvatar(
+                  backgroundColor: Colors.grey[300],
+                  child: Icon(Icons.person, color: Colors.red)),
+              title: Text('Seat 1: ' + widget.tableData['seat_1']),
+            ),
+          ),
+          Card(
+            color: Colors.grey[100],
+            margin: EdgeInsets.all(2),
+            elevation: 0,
+            child: ListTile(
+              tileColor: Colors.grey[200],
+              leading: CircleAvatar(
+                  backgroundColor: Colors.grey[300],
+                  child: Icon(Icons.person, color: Colors.red)),
+              title: Text('Seat 2: ' + widget.tableData['seat_2']),
+            ),
+          ),
+          Card(
+            color: Colors.grey[100],
+            margin: EdgeInsets.all(2),
+            elevation: 0,
+            child: ListTile(
+              tileColor: Colors.grey[200],
+              leading: CircleAvatar(
+                  backgroundColor: Colors.grey[300],
+                  child: Icon(Icons.person, color: Colors.red)),
+              title: Text('Seat 3: ' + widget.tableData['seat_3']),
+            ),
+          ),
+          Card(
+            color: Colors.grey[100],
+            margin: EdgeInsets.all(2),
+            elevation: 0,
+            child: ListTile(
+              tileColor: Colors.grey[200],
+              leading: CircleAvatar(
+                  backgroundColor: Colors.grey[300],
+                  child: Icon(Icons.person, color: Colors.red)),
+              title: Text('Seat 4: ' + widget.tableData['seat_4']),
+            ),
+          ),
+          Card(
+            color: Colors.grey[100],
+            margin: EdgeInsets.all(2),
+            elevation: 0,
+            child: ListTile(
+              tileColor: Colors.grey[200],
+              leading: CircleAvatar(
+                  backgroundColor: Colors.grey[300],
+                  child: Icon(Icons.person, color: Colors.red)),
+              title: Text('Seat 5: ' + widget.tableData['seat_5']),
+            ),
+          ),
+          Card(
+            color: Colors.grey[100],
+            margin: EdgeInsets.all(2),
+            elevation: 0,
+            child: ListTile(
+              tileColor: Colors.grey[200],
+              leading: CircleAvatar(
+                  backgroundColor: Colors.grey[300],
+                  child: Icon(Icons.person, color: Colors.red)),
+              title: Text('Seat 6: ' + widget.tableData['seat_6']),
+            ),
+          ),
+          Card(
+            color: Colors.grey[100],
+            margin: EdgeInsets.all(2),
+            elevation: 0,
+            child: ListTile(
+              tileColor: Colors.grey[200],
+              leading: CircleAvatar(
+                  backgroundColor: Colors.grey[300],
+                  child: Icon(Icons.person, color: Colors.red)),
+              title: Text('Seat 7: ' + widget.tableData['seat_7']),
+            ),
+          ),
+          Card(
+            color: Colors.grey[100],
+            margin: EdgeInsets.all(2),
+            elevation: 0,
+            child: ListTile(
+              tileColor: Colors.grey[200],
+              leading: CircleAvatar(
+                  backgroundColor: Colors.grey[300],
+                  child: Icon(Icons.person, color: Colors.red)),
+              title: Text('Seat 8: ' + widget.tableData['seat_8']),
+            ),
+          ),
+          Card(
+            color: Colors.grey[100],
+            margin: EdgeInsets.all(2),
+            elevation: 0,
+            child: ListTile(
+              tileColor: Colors.grey[200],
+              leading: CircleAvatar(
+                  backgroundColor: Colors.grey[300],
+                  child: Icon(Icons.person, color: Colors.red)),
+              title: Text('Seat 9: ' + widget.tableData['seat_9']),
+            ),
+          ),
+          Card(
+            color: Colors.grey[100],
+            margin: EdgeInsets.all(2),
+            elevation: 0,
+            child: ListTile(
+              tileColor: Colors.grey[200],
+              leading: CircleAvatar(
+                  backgroundColor: Colors.grey[300],
+                  child: Icon(Icons.person, color: Colors.red)),
+              title: Text('Seat 10: ' + widget.tableData['seat_10']),
+            ),
+          ),
+        ],
+      ));
     }
   }
 
@@ -865,8 +1145,6 @@ class _TableScreenAltState extends State<TableScreenAlt> {
             usersPlay = response.results;
             usersPlay
                 .removeWhere((user) => user['Status']['state'] == 'Seated');
-            usersPlay
-                .removeWhere((user) => user['Status']['state'] == 'On-Hold');
 
             usersPlay
                 .removeWhere((user) => user['Status']['state'] == 'Cancelled');
@@ -919,6 +1197,18 @@ class _TableScreenAltState extends State<TableScreenAlt> {
           users = usersPlay;
         } else {
           users = usersPlay + usersWait;
+          users.sort((a, b) {
+            var adate = a['registration_time'];
+            var bdate = b['registration_time'];
+            return adate.compareTo(
+                bdate); //to get the order other way just switch `adate & bdate`
+          });
+          users.sort((a, b) {
+            var adate = a['game'];
+            var bdate = b['game'];
+            return adate.compareTo(
+                bdate); //to get the order other way just switch `adate & bdate`
+          });
         }
         switchFavorite();
       });
@@ -933,6 +1223,7 @@ class _TableScreenAltState extends State<TableScreenAlt> {
     liveQuery();
     getSeatedObj();
     getonHoldObj();
+    getFinishedObj();
   }
 
   Future<void> readJson() async {
@@ -991,34 +1282,18 @@ class _TableScreenAltState extends State<TableScreenAlt> {
           Builder(
             builder: (context) => Center(
               child: IconButton(
-                icon: Icon(Icons.person_pin_circle_outlined),
+                icon: Icon(Icons.change_circle),
                 onPressed: () async {
                   await checkTableSeats();
-                  showModalBottomSheet(
-                    context: context,
-                    builder: (context) {
-                      return Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          children: [
-                            Text('Table: ' +
-                                widget.tableData['table_num'].toString()),
-                            Text('Game: ' + widget.tableData['game']),
-                            Text('Seat 1: ' + widget.tableData['seat_1']),
-                            Text('Seat 2: ' + widget.tableData['seat_2']),
-                            Text('Seat 3: ' + widget.tableData['seat_3']),
-                            Text('Seat 4: ' + widget.tableData['seat_4']),
-                            Text('Seat 5: ' + widget.tableData['seat_5']),
-                            Text('Seat 6: ' + widget.tableData['seat_6']),
-                            Text('Seat 7: ' + widget.tableData['seat_7']),
-                            Text('Seat 8: ' + widget.tableData['seat_8']),
-                            Text('Seat 9: ' + widget.tableData['seat_9']),
-                            Text('Seat 10: ' + widget.tableData['seat_10']),
-                          ],
-                        ),
-                      );
-                    },
-                  );
+                  if (seatList == true) {
+                    setState(() {
+                      seatList = false;
+                    });
+                  } else {
+                    setState(() {
+                      seatList = true;
+                    });
+                  }
                 },
               ),
             ),
@@ -1215,7 +1490,8 @@ class _TableScreenAltState extends State<TableScreenAlt> {
           Row(
             children: [
               users != null
-                  ? Expanded(
+                  ? seatWidget()
+                  /* Expanded(
                       child: ListView.builder(
                         itemCount: users.length,
                         itemBuilder: (context, index) {
@@ -1249,7 +1525,7 @@ class _TableScreenAltState extends State<TableScreenAlt> {
                           );
                         },
                       ),
-                    )
+                    )*/
                   : Expanded(
                       child: Center(child: Text('No Players available')),
                     ),
@@ -1317,7 +1593,7 @@ class _TableScreenAltState extends State<TableScreenAlt> {
                                   },
                                   onAccept: (data) {
                                     setState(() {
-                                      chair['user'] = data;
+                                      chair['user'] = data["username"]['Name'];
                                     });
                                     seatPlayer(
                                         widget.tableData['objectId'],
@@ -1352,7 +1628,7 @@ class _TableScreenAltState extends State<TableScreenAlt> {
                                   },
                                   onAccept: (data) {
                                     setState(() {
-                                      chair['user'] = data;
+                                      chair['user'] = data["username"]['Name'];
                                     });
                                     seatPlayer(
                                         widget.tableData['objectId'],
@@ -1390,8 +1666,12 @@ class _TableScreenAltState extends State<TableScreenAlt> {
                 );
               },
               onAccept: (data) async {
-                await openSeat(
-                    widget.tableData['objectId'], data['name'], data['user']);
+                if (data['user'] != null) {
+                  await openSeat(
+                      widget.tableData['objectId'], data['name'], data['user']);
+                } else {
+                  playerCancel(data['objectId'], 'Cancelled by floormanager');
+                }
                 setupTable();
               },
             ),
