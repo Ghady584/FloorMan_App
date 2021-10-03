@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 //Copy this CustomPainter code to the Bottom of the File
 class TablePainter extends CustomPainter {
   var color;
-  TablePainter({this.color});
+  var thickness;
+  TablePainter({this.color, this.thickness});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -173,7 +174,13 @@ class TablePainter extends CustomPainter {
     path_1.close();
 
     Paint paint_1_fill = Paint()..style = PaintingStyle.fill;
-    paint_1_fill.color = Color(0xff000000).withOpacity(1.0);
+
+    if (thickness == "thin") {
+      paint_1_fill.color = Color(0x000000).withOpacity(0.5);
+    } else {
+      paint_1_fill.color = Color(0x000000).withOpacity(1.0);
+    }
+
     canvas.drawPath(path_1, paint_1_fill);
   }
 

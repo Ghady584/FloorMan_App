@@ -373,7 +373,7 @@ class _WaitingListState extends State<WaitingList> {
       }
       if (filterPLO5 == false) {
         setState(() {
-          users.removeWhere((user) => user['game'] == 'PLO 5/10');
+          users.removeWhere((user) => user['game'] == 'PLO 5/5');
         });
       }
       if (filterPLO10 == false) {

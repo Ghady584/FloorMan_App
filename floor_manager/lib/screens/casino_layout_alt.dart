@@ -19,7 +19,7 @@ class _CasinoLayOutAltState extends State<CasinoLayOutAlt> {
   String game;
   String tableType;
   final List tableTypes = ['Main Table', 'Regular Table'];
-  final List games = ['NLH 5/10', 'NLH 2/4', 'PLO 5/10', 'PLO 10/10'];
+  final List games = ['NLH 5/10', 'NLH 2/4', 'PLO 5/5', 'PLO 10/10'];
 
   void openSum(String tableNum, String game) async {
     var customer = ParseObject('daily_sum')
@@ -219,7 +219,7 @@ class _CasinoLayOutAltState extends State<CasinoLayOutAlt> {
           color = Colors.green[800];
         });
       }
-      if (table['game'] == 'PLO 5/10') {
+      if (table['game'] == 'PLO 5/5') {
         setState(() {
           color = Colors.red[300];
         });
@@ -237,6 +237,22 @@ class _CasinoLayOutAltState extends State<CasinoLayOutAlt> {
     return color;
   }
 
+  var thickness;
+  dynamic checkThickness(var table) {
+    if (table['opened'] == true) {
+      if (table['table_type'] == 'Main Table') {
+        setState(() {
+          thickness = "thick";
+        });
+      } else {
+        setState(() {
+          thickness = "thin";
+        });
+      }
+    }
+    return thickness;
+  }
+
   checkTables() async {
     QueryBuilder<ParseObject> queryPost =
         QueryBuilder<ParseObject>(ParseObject('Tables'));
@@ -249,8 +265,6 @@ class _CasinoLayOutAltState extends State<CasinoLayOutAlt> {
           tables = response.results;
         },
       );
-
-      ;
     } else {
       print(response.error);
     }
@@ -409,8 +423,9 @@ class _CasinoLayOutAltState extends State<CasinoLayOutAlt> {
                                           (tableWidth * 1).toDouble()),
                                       painter: TablePainter(
                                           color: checkColor(
-                                        table,
-                                      )),
+                                            table,
+                                          ),
+                                          thickness: checkThickness(table)),
                                     ),
                                   ),
                                   Positioned.fill(
