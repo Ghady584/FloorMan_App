@@ -502,7 +502,7 @@ class _RegistrationList extends State<RegistrationList> {
       }
       if (filterPLO5 == false) {
         setState(() {
-          users.removeWhere((user) => user['game'] == 'PLO 5/10');
+          users.removeWhere((user) => user['game'] == 'PLO 5/5');
         });
       }
       if (filterPLO10 == false) {
@@ -1028,7 +1028,7 @@ class _RegistrationList extends State<RegistrationList> {
                               ),
                               Row(
                                 children: [
-                                  Text('PLO 5/10'),
+                                  Text('PLO 5/5'),
                                   Checkbox(
                                     value: filterPLO5,
                                     onChanged: (value) {

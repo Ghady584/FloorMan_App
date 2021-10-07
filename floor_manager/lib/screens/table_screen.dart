@@ -110,7 +110,7 @@ class _TablePageState extends State<TablePage> {
   }
 
   final List tableTypes = ['Main Table', 'Regular Table'];
-  final List games = ['NLH 5/10', 'NLH 2/4', 'PLO 5/10', 'PLO 10/10'];
+  final List games = ['NLH 5/10', 'NLH 2/4', 'PLO 5/5', 'PLO 10/10'];
   String tableSeat;
   String game;
   String tableType;

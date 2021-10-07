@@ -27,7 +27,7 @@ class _TableScreenAltState extends State<TableScreenAlt> {
   String game;
   String tableType;
   final List tableTypes = ['Main Table', 'Regular Table'];
-  final List games = ['NLH 5/10', 'NLH 2/4', 'PLO 5/10', 'PLO 10/10'];
+  final List games = ['NLH 5/10', 'NLH 2/4', 'PLO 5/5', 'PLO 10/10'];
 
   void switchFavorite() {
     for (var user in users)
@@ -1205,19 +1205,16 @@ class _TableScreenAltState extends State<TableScreenAlt> {
                       childWhenDragging: CircleAvatar(
                           backgroundColor: Colors.grey[600],
                           child: Icon(Icons.person, color: Colors.red)),
-                      dragAnchor: DragAnchor.pointer,
                     ),
                     title: Text(user["username"]['Name']),
-                    subtitle: map[user["username"]['Name']] != null
-                        ? Text(user['game'].toString() +
-                            '/ ' +
-                            user['favorite'] +
-                            'Other games: ' +
-                            map[user["username"]['Name']] +
-                            ' / ' +
-                            'State: ' +
-                            user['Status']['state'])
-                        : CircularProgressIndicator()),
+                    subtitle: map[user["username"]['Name']] != null ? Text(
+                        // '/ ' +
+                        // user['favorite'] +
+                        // 'Other games: ' +
+                        // map[user["username"]['Name']] +
+                        // ' / ' +
+                        // 'State: ' +
+                        user['Status']['state']) : CircularProgressIndicator()),
               ),
           ],
         ),
@@ -1626,36 +1623,38 @@ class _TableScreenAltState extends State<TableScreenAlt> {
                                               child: Column(
                                                 children: <Widget>[
                                                   TextButton(
-                                                    style: TextButton.styleFrom(
-                                                        backgroundColor:
-                                                            Colors.green[800]),
-                                                    child: Text(
-                                                      "With players continue (High Card)",
-                                                      style: TextStyle(
-                                                          color: Colors.white,
-                                                          fontSize: 14),
-                                                    ),
-                                                    onPressed: () {
-                                                      setState(
-                                                        () {
-                                                          closeTable(
-                                                              widget.tableData[
-                                                                  'objectId']);
-                                                          closeSum(widget
-                                                              .tableData[
-                                                                  'table_num']
-                                                              .toString());
-                                                        },
-                                                      );
-                                                      Navigator.pop(context);
-                                                      Navigator.push(context,
-                                                          MaterialPageRoute(
-                                                        builder: (context) {
-                                                          return CasinoLayOutAlt();
-                                                        },
-                                                      ));
-                                                    },
-                                                  ),
+                                                      style:
+                                                          TextButton.styleFrom(
+                                                              backgroundColor:
+                                                                  Colors.green[
+                                                                      800]),
+                                                      child: Text(
+                                                        "      With Players continue (High Card)     ",
+                                                        style: TextStyle(
+                                                            color: Colors.white,
+                                                            fontSize: 15),
+                                                      ),
+                                                      onPressed: () {
+                                                        setState(
+                                                          () {
+                                                            closeTable(widget
+                                                                    .tableData[
+                                                                'objectId']);
+                                                            closeSum(widget
+                                                                .tableData[
+                                                                    'table_num']
+                                                                .toString());
+                                                          },
+                                                        );
+                                                        Navigator.pop(context);
+
+                                                        Navigator.push(context,
+                                                            MaterialPageRoute(
+                                                          builder: (context) {
+                                                            return CasinoLayOutAlt();
+                                                          },
+                                                        ));
+                                                      }),
                                                   TextButton(
                                                       style:
                                                           TextButton.styleFrom(
@@ -1788,7 +1787,8 @@ class _TableScreenAltState extends State<TableScreenAlt> {
                           quarterTurns: 3,
                           child: CustomPaint(
                             size: Size(616, (616 * 1).toDouble()),
-                            painter: TablePainter(color: Colors.green[800]),
+                            painter: TablePainter(
+                                color: Colors.green[800], thickness: "thin"),
                           ),
                         ),
                       ),
@@ -1905,19 +1905,28 @@ class _TableScreenAltState extends State<TableScreenAlt> {
           Positioned(
             child: DragTarget(
               builder: (context, candidateData, rejectedData) {
-                return ClipOval(
-                  child: Container(
-                    decoration: BoxDecoration(color: Colors.green),
-                    child: SizedBox(
-                        width: 500 / 6,
-                        height: 500 / 6,
-                        child: Icon(
-                          Icons.close,
-                          color: Colors.red,
-                          size: 300 / 6,
-                        )),
-                  ),
-                );
+                return candidateData.length > 0
+                    ? ClipOval(
+                        child: Container(
+                          decoration: BoxDecoration(color: Colors.red),
+                          child: SizedBox(
+                              width: 500 / 6,
+                              height: 500 / 6,
+                              child: Icon(
+                                Icons.close,
+                                color: Colors.white,
+                                size: 300 / 6,
+                              )),
+                        ),
+                      )
+                    : ClipOval(
+                        child: Container(
+                          child: SizedBox(
+                            width: 500 / 6,
+                            height: 500 / 6,
+                          ),
+                        ),
+                      );
               },
               onAccept: (data) async {
                 if (data['user'] != null) {
