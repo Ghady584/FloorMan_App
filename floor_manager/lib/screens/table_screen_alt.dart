@@ -413,6 +413,248 @@ class _TableScreenAltState extends State<TableScreenAlt> {
     }
   }
 
+  var checkedInObj;
+  getcheckedInObj() async {
+    QueryBuilder<ParseObject> queryPost =
+        QueryBuilder<ParseObject>(ParseObject('States'))
+          ..whereEqualTo('state', 'Checked-In');
+
+    var response = await queryPost.query();
+    for (var item in response.results) {
+      if (mounted) {
+        setState(() {
+          checkedInObj = item;
+        });
+      }
+    }
+  }
+
+  void checkOtherTables(String userName, var userNameObj) async {
+    QueryBuilder<ParseObject> queryPost =
+        QueryBuilder<ParseObject>(ParseObject('Tables'))
+          ..whereEqualTo('seat_1', userName);
+
+    var response = await queryPost.query();
+
+    if (response.success) {
+      if (mounted) {
+        if (response.results != null) {
+          for (var item in response.results) {
+            var player = ParseObject('Tables')
+              ..objectId = item['objectId']
+              ..set('seat_1', '');
+            await player.save();
+          }
+        }
+      }
+    } else {
+      print(response.error);
+    }
+
+    QueryBuilder<ParseObject> queryPost2 =
+        QueryBuilder<ParseObject>(ParseObject('Tables'))
+          ..whereEqualTo('seat_2', userName);
+
+    var response2 = await queryPost2.query();
+
+    if (response2.success) {
+      if (mounted) {
+        if (response2.results != null) {
+          for (var item in response2.results) {
+            var player = ParseObject('Tables')
+              ..objectId = item['objectId']
+              ..set('seat_2', '');
+            await player.save();
+          }
+        }
+      }
+    } else {
+      print(response2.error);
+    }
+    QueryBuilder<ParseObject> queryPost3 =
+        QueryBuilder<ParseObject>(ParseObject('Tables'))
+          ..whereEqualTo('seat_3', userName);
+
+    var response3 = await queryPost3.query();
+
+    if (response3.success) {
+      if (mounted) {
+        if (response3.results != null) {
+          for (var item in response3.results) {
+            var player = ParseObject('Tables')
+              ..objectId = item['objectId']
+              ..set('seat_3', '');
+            await player.save();
+          }
+        }
+      }
+    } else {
+      print(response3.error);
+    }
+    QueryBuilder<ParseObject> queryPost4 =
+        QueryBuilder<ParseObject>(ParseObject('Tables'))
+          ..whereEqualTo('seat_4', userName);
+
+    var response4 = await queryPost4.query();
+
+    if (response4.success) {
+      if (mounted) {
+        if (response4.results != null) {
+          for (var item in response4.results) {
+            var player = ParseObject('Tables')
+              ..objectId = item['objectId']
+              ..set('seat_4', '');
+            await player.save();
+          }
+        }
+      }
+    } else {
+      print(response4.error);
+    }
+    QueryBuilder<ParseObject> queryPost5 =
+        QueryBuilder<ParseObject>(ParseObject('Tables'))
+          ..whereEqualTo('seat_5', userName);
+
+    var response5 = await queryPost5.query();
+
+    if (response5.success) {
+      if (mounted) {
+        if (response5.results != null) {
+          for (var item in response5.results) {
+            var player = ParseObject('Tables')
+              ..objectId = item['objectId']
+              ..set('seat_5', '');
+            await player.save();
+          }
+        }
+      }
+    } else {
+      print(response5.error);
+    }
+    QueryBuilder<ParseObject> queryPost6 =
+        QueryBuilder<ParseObject>(ParseObject('Tables'))
+          ..whereEqualTo('seat_6', userName);
+
+    var response6 = await queryPost6.query();
+
+    if (response6.success) {
+      if (mounted) {
+        if (response6.results != null) {
+          for (var item in response6.results) {
+            var player = ParseObject('Tables')
+              ..objectId = item['objectId']
+              ..set('seat_6', '');
+            await player.save();
+          }
+        }
+      }
+    } else {
+      print(response6.error);
+    }
+    QueryBuilder<ParseObject> queryPost7 =
+        QueryBuilder<ParseObject>(ParseObject('Tables'))
+          ..whereEqualTo('seat_7', userName);
+
+    var response7 = await queryPost7.query();
+
+    if (response7.success) {
+      if (mounted) {
+        if (response7.results != null) {
+          for (var item in response7.results) {
+            var player = ParseObject('Tables')
+              ..objectId = item['objectId']
+              ..set('seat_7', '');
+            await player.save();
+          }
+        }
+      }
+    } else {
+      print(response7.error);
+    }
+    QueryBuilder<ParseObject> queryPost8 =
+        QueryBuilder<ParseObject>(ParseObject('Tables'))
+          ..whereEqualTo('seat_8', userName);
+
+    var response8 = await queryPost8.query();
+
+    if (response8.success) {
+      if (mounted) {
+        if (response8.results != null) {
+          for (var item in response8.results) {
+            var player = ParseObject('Tables')
+              ..objectId = item['objectId']
+              ..set('seat_8', '');
+            await player.save();
+          }
+        }
+      }
+    } else {
+      print(response8.error);
+    }
+    QueryBuilder<ParseObject> queryPost9 =
+        QueryBuilder<ParseObject>(ParseObject('Tables'))
+          ..whereEqualTo('seat_9', userName);
+
+    var response9 = await queryPost9.query();
+
+    if (response9.success) {
+      if (mounted) {
+        if (response9.results != null) {
+          for (var item in response9.results) {
+            var player = ParseObject('Tables')
+              ..objectId = item['objectId']
+              ..set('seat_9', '');
+            await player.save();
+          }
+        }
+      }
+    } else {
+      print(response9.error);
+    }
+    QueryBuilder<ParseObject> queryPost10 =
+        QueryBuilder<ParseObject>(ParseObject('Tables'))
+          ..whereEqualTo('seat_10', userName);
+
+    var response10 = await queryPost10.query();
+
+    if (response10.success) {
+      if (mounted) {
+        if (response10.results != null) {
+          for (var item in response10.results) {
+            var player = ParseObject('Tables')
+              ..objectId = item['objectId']
+              ..set('seat_10', '');
+            await player.save();
+          }
+        }
+      }
+    } else {
+      print(response10.error);
+    }
+
+    QueryBuilder<ParseObject> queryPostReg =
+        QueryBuilder<ParseObject>(ParseObject('registrations'))
+          ..whereEqualTo('username', userNameObj)
+          ..whereEqualTo('Status', seatedObj);
+
+    var responseReg = await queryPostReg.query();
+
+    if (responseReg.success) {
+      if (mounted) {
+        if (responseReg.results != null) {
+          for (var item in responseReg.results) {
+            var player = ParseObject('registrations')
+              ..objectId = item['objectId']
+              ..set('Status', finishedObj);
+            await player.save();
+          }
+        }
+      }
+    } else {
+      print(responseReg.error);
+    }
+  }
+
   void seatPlayer(String tableID, String userName, String userID,
       String chairName, var userObj) async {
     await getUser_app(userName);
@@ -783,6 +1025,8 @@ class _TableScreenAltState extends State<TableScreenAlt> {
             usersPlay = response.results;
             usersPlay
                 .removeWhere((user) => user['Status']['state'] == 'Seated');
+            usersPlay
+                .removeWhere((user) => user['Status']['state'] == 'Finished');
 
             usersPlay
                 .removeWhere((user) => user['Status']['state'] == 'Cancelled');
@@ -913,7 +1157,7 @@ class _TableScreenAltState extends State<TableScreenAlt> {
     QueryBuilder<ParseObject> query =
         QueryBuilder<ParseObject>(ParseObject('registrations'))
           ..whereEqualTo('username', userObj)
-          ..whereNotEqualTo('Status', seatedObj);
+          ..whereEqualTo('Status', checkedInObj);
 
     var response = await query.query();
     for (var item in response.results) {
@@ -1145,6 +1389,8 @@ class _TableScreenAltState extends State<TableScreenAlt> {
             usersPlay = response.results;
             usersPlay
                 .removeWhere((user) => user['Status']['state'] == 'Seated');
+            usersPlay
+                .removeWhere((user) => user['Status']['state'] == 'Finished');
 
             usersPlay
                 .removeWhere((user) => user['Status']['state'] == 'Cancelled');
@@ -1224,6 +1470,7 @@ class _TableScreenAltState extends State<TableScreenAlt> {
     getSeatedObj();
     getonHoldObj();
     getFinishedObj();
+    getcheckedInObj();
   }
 
   Future<void> readJson() async {
@@ -1591,10 +1838,13 @@ class _TableScreenAltState extends State<TableScreenAlt> {
                                             dragAnchor: DragAnchor.pointer,
                                           );
                                   },
-                                  onAccept: (data) {
+                                  onAccept: (data) async {
                                     setState(() {
                                       chair['user'] = data["username"]['Name'];
                                     });
+                                    await checkOtherTables(
+                                        data["username"]['Name'],
+                                        data["username"]);
                                     seatPlayer(
                                         widget.tableData['objectId'],
                                         data["username"]['Name'],
@@ -1626,10 +1876,14 @@ class _TableScreenAltState extends State<TableScreenAlt> {
                                             painter: ChairPainter(),
                                           );
                                   },
-                                  onAccept: (data) {
+                                  onAccept: (data) async {
                                     setState(() {
                                       chair['user'] = data["username"]['Name'];
                                     });
+                                    await checkOtherTables(
+                                        data["username"]['Name'],
+                                        data["username"]);
+
                                     seatPlayer(
                                         widget.tableData['objectId'],
                                         data["username"]['Name'],
