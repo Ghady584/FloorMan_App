@@ -95,11 +95,10 @@ class _TableScreenAltState extends State<TableScreenAlt> {
     };
     var res = await _dio.get(url, options: options, queryParameters: qParams);
     if (res.statusCode == 200) {
-      await setState(() {
+      setState(() {
         user1 = (res.data);
-
-        getUser_appState(user1['results'][0]['objectId']);
       });
+      await getUser_appState(user1['results'][0]['objectId']);
     } else {
       throw "Unable to retrieve posts.";
     }
@@ -131,6 +130,7 @@ class _TableScreenAltState extends State<TableScreenAlt> {
     if (res.statusCode == 200) {
       setState(() {
         userStateId = (res.data['results'][0]['objectId']);
+        log("GREATEEEEEEEE");
       });
       print(user1);
     } else {
@@ -187,6 +187,8 @@ class _TableScreenAltState extends State<TableScreenAlt> {
   }
 
   void tableReady(String seatX) async {
+    await seatUserState(userStateId, widget.tableData['game']);
+
     var res = await http.post(
       Uri.parse('https://parseapi.back4app.com/classes/Messages'),
       headers: {
@@ -208,7 +210,6 @@ class _TableScreenAltState extends State<TableScreenAlt> {
     if (res.statusCode == 201) {
       // If the server did return a 201 CREATED response,
       // then parse the JSON.
-      seatUserState(userStateId, widget.tableData['game']);
       return jsonDecode(res.body);
     } else {
       // If the server did not return a 201 CREATED response,
@@ -971,9 +972,12 @@ class _TableScreenAltState extends State<TableScreenAlt> {
   var map = {};
 
   void playerothergames(var userObj) async {
-    QueryBuilder<ParseObject> query1 =
-        QueryBuilder<ParseObject>(ParseObject('registrations'))
-          ..whereEqualTo('username', userObj);
+    QueryBuilder<ParseObject> query1 = QueryBuilder<ParseObject>(
+        ParseObject('registrations'))
+      ..whereEqualTo('username', userObj)
+      ..whereGreaterThan('registration_time', dateTodaySt)
+      ..whereLessThan("registration_time", dateTodayEn.add(Duration(days: 1)));
+
     var response1 = await query1.query();
     for (var item in response1.results) {
       await setState(() {

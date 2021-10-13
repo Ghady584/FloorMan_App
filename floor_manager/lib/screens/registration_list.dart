@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'package:floor_manager/components/empty_content.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
@@ -36,6 +37,7 @@ class _RegistrationList extends State<RegistrationList> {
   bool filterSeated = false;
   bool filterCancelled = false;
   bool filterOnHold = false;
+  bool filterFinished = false;
 
   var gamesList;
   String username;
@@ -485,6 +487,411 @@ class _RegistrationList extends State<RegistrationList> {
       }
   }
 
+  List regPlayers = [];
+  var map = {};
+  var users1 = [];
+  Widget body_body() {
+    return ListView.builder(
+      itemCount: regPlayers.length,
+      itemBuilder: (BuildContext context, index) {
+        for (var user in users) {}
+        return ExpansionTile(
+          title: Text(regPlayers[index]),
+          children: [
+            DataTable2(
+              columnSpacing: 0,
+              horizontalMargin: 20,
+              minWidth: 300,
+              columns: [
+                DataColumn2(
+                  label: Text('Player',
+                      style: TextStyle(
+                          fontSize: AdaptiveTextSize()
+                              .getadaptiveTextSize(context, 10))),
+                  size: ColumnSize.L,
+                ),
+                DataColumn(
+                  label: Text('Game',
+                      style: TextStyle(
+                          fontSize: AdaptiveTextSize()
+                              .getadaptiveTextSize(context, 10))),
+                ),
+                DataColumn(
+                  label: Text('Favorite?',
+                      style: TextStyle(
+                          fontSize: AdaptiveTextSize()
+                              .getadaptiveTextSize(context, 10))),
+                ),
+                DataColumn(
+                  label: Text('Status',
+                      style: TextStyle(
+                          fontSize: AdaptiveTextSize()
+                              .getadaptiveTextSize(context, 10))),
+                ),
+              ],
+              rows: [
+                for (var user in users)
+                  if (user['username']['Name'] == regPlayers[index])
+                    DataRow2(
+                      onTap: () async {
+                        print(user['username']['Name']);
+                        await getUser_app(user['username']['Name']);
+                        setState(() {
+                          game = user['game'];
+                          type = user['type'];
+                          registrated = user['registrated_by'];
+                          state = user['Status']['state'];
+                          cancel = null;
+                        });
+
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              scrollable: true,
+                              title: Text('Edit Registration'),
+                              content: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Form(
+                                  child: Column(
+                                    children: <Widget>[
+                                      Card(
+                                        color: Colors.grey[200],
+                                        child: Padding(
+                                          padding: EdgeInsets.all(15),
+                                          child: Row(
+                                            children: [
+                                              Icon(
+                                                Icons.person,
+                                                color: Colors.teal[900],
+                                              ),
+                                              SizedBox(
+                                                width: 30,
+                                              ),
+                                              Text(user['username']['Name'],
+                                                  style: TextStyle(
+                                                      color: Colors.teal[900],
+                                                      fontSize: 15))
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(
+                                        height: 10,
+                                      ),
+                                      Row(
+                                        children: [
+                                          Text('Game:'),
+                                          SizedBox(
+                                            width: 25,
+                                          ),
+                                          Text(user['game'].toString())
+                                        ],
+                                      ),
+                                      Row(
+                                        children: [
+                                          Text('Type:'),
+                                          SizedBox(
+                                            width: 25,
+                                          ),
+                                          StatefulBuilder(
+                                            builder: (BuildContext context,
+                                                StateSetter setState) {
+                                              return DropdownButton<String>(
+                                                value: (type) ?? user['type'],
+                                                items: types.map(
+                                                  (type) {
+                                                    return DropdownMenuItem<
+                                                        String>(
+                                                      value: type,
+                                                      child: Text(type),
+                                                    );
+                                                  },
+                                                ).toList(),
+                                                onChanged: (value) {
+                                                  setState(
+                                                    () {
+                                                      type = value;
+                                                    },
+                                                  );
+                                                },
+                                              );
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                      SizedBox(
+                                        height: 16,
+                                      ),
+                                      Row(
+                                        children: [
+                                          Text('Favorite?'),
+                                          SizedBox(
+                                            width: 32,
+                                          ),
+                                          Text(user['favorite'])
+                                        ],
+                                      ),
+                                      SizedBox(
+                                        height: 16,
+                                      ),
+                                      Row(
+                                        children: [
+                                          Text('Comment:'),
+                                          SizedBox(
+                                            width: 32,
+                                          ),
+                                          Text(user['comment'])
+                                        ],
+                                      ),
+                                      Row(
+                                        children: [
+                                          Text('Registrated By:'),
+                                          SizedBox(
+                                            width: 10,
+                                          ),
+                                          StatefulBuilder(
+                                            builder: (BuildContext context,
+                                                StateSetter setState) {
+                                              return DropdownButton<String>(
+                                                value: (registrated) ??
+                                                    user['registrated_by'],
+                                                items: registratedBy.map(
+                                                  (registrated) {
+                                                    return DropdownMenuItem<
+                                                        String>(
+                                                      value: registrated,
+                                                      child: Text(registrated),
+                                                    );
+                                                  },
+                                                ).toList(),
+                                                onChanged: (value) {
+                                                  setState(
+                                                    () {
+                                                      registrated = value;
+                                                    },
+                                                  );
+                                                },
+                                              );
+                                            },
+                                          )
+                                        ],
+                                      ),
+                                      Row(
+                                        children: [
+                                          Text('Registration Time'),
+                                          SizedBox(
+                                            width: 20,
+                                          ),
+                                          Flexible(
+                                            child: Text(
+                                              user['registration_time'],
+                                              style: TextStyle(fontSize: 11),
+                                            ),
+                                          ),
+                                          IconButton(
+                                              icon: Icon(Icons.edit_off),
+                                              color: Colors.black,
+                                              onPressed: () {
+                                                pickDateTime(context);
+                                              }),
+                                        ],
+                                      ),
+                                      Row(
+                                        children: [
+                                          Text('State:'),
+                                          SizedBox(
+                                            width: 25,
+                                          ),
+                                          StatefulBuilder(
+                                            builder: (BuildContext context,
+                                                StateSetter setState) {
+                                              return DropdownButton<String>(
+                                                value: (state) ??
+                                                    user['Status']['state'],
+                                                items: status.map(
+                                                  (state) {
+                                                    return DropdownMenuItem<
+                                                        String>(
+                                                      value: state,
+                                                      child: Text(state),
+                                                    );
+                                                  },
+                                                ).toList(),
+                                                onChanged: (value) {
+                                                  setState(
+                                                    () {
+                                                      state = value;
+                                                    },
+                                                  );
+                                                },
+                                              );
+                                            },
+                                          )
+                                        ],
+                                      ),
+                                      TextButton(
+                                        style: TextButton.styleFrom(
+                                            backgroundColor: Colors.green[800]),
+                                        child: Text(
+                                          "Start Dinner Break",
+                                        ),
+                                        onPressed: () async {
+                                          await startDinner();
+                                          Navigator.pop(context);
+                                        },
+                                      ),
+                                      TextButton(
+                                        style: TextButton.styleFrom(
+                                            backgroundColor: Colors.green[800]),
+                                        child: Text(
+                                          "Cancel registration",
+                                        ),
+                                        onPressed: () {
+                                          showDialog(
+                                            context: context,
+                                            builder: (BuildContext context) {
+                                              return AlertDialog(
+                                                scrollable: true,
+                                                title:
+                                                    Text('Cancel registartion'),
+                                                content: Padding(
+                                                  padding:
+                                                      const EdgeInsets.all(8.0),
+                                                  child: Form(
+                                                    child: Column(
+                                                      children: <Widget>[
+                                                        Row(
+                                                          children: [
+                                                            StatefulBuilder(
+                                                              builder: (BuildContext
+                                                                      context,
+                                                                  StateSetter
+                                                                      setState) {
+                                                                return DropdownButton<
+                                                                    String>(
+                                                                  value: (cancel) ??
+                                                                      'Cancelled by floormanager',
+                                                                  items: cancels
+                                                                      .map(
+                                                                    (cancel) {
+                                                                      return DropdownMenuItem<
+                                                                          String>(
+                                                                        value:
+                                                                            cancel,
+                                                                        child: Text(
+                                                                            cancel),
+                                                                      );
+                                                                    },
+                                                                  ).toList(),
+                                                                  onChanged:
+                                                                      (value) {
+                                                                    setState(
+                                                                      () {
+                                                                        cancel =
+                                                                            value;
+                                                                      },
+                                                                    );
+                                                                  },
+                                                                );
+                                                              },
+                                                            )
+                                                          ],
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ),
+                                                actions: [
+                                                  TextButton(
+                                                    style: TextButton.styleFrom(
+                                                        backgroundColor:
+                                                            Colors.green[800]),
+                                                    child: Text(
+                                                      "Submit",
+                                                    ),
+                                                    onPressed: () {
+                                                      playerCancel(
+                                                          user['objectId'],
+                                                          cancel);
+                                                      Navigator.pop(context);
+                                                      cancel =
+                                                          'Cancellation Reason';
+                                                    },
+                                                  ),
+                                                ],
+                                              );
+                                            },
+                                          );
+                                        },
+                                      ),
+                                      TextButton(
+                                        style: TextButton.styleFrom(
+                                            backgroundColor: Colors.green[800]),
+                                        child: Text(
+                                          "Check-In Player",
+                                        ),
+                                        onPressed: () async {
+                                          playerCheckIn(user['username']);
+                                          checkPlayerIn();
+                                          Navigator.pop(context);
+                                        },
+                                      ),
+                                      TextButton(
+                                        style: TextButton.styleFrom(
+                                            backgroundColor: Colors.green[800]),
+                                        child: Text(
+                                          "Apply Changes To Registration",
+                                        ),
+                                        onPressed: () {
+                                          playerRegEdit(
+                                              state, user['objectId']);
+                                          Navigator.pop(context);
+                                        },
+                                      )
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                      cells: [
+                        DataCell(
+                          Text(user['username']['Name'].toString(),
+                              style: TextStyle(
+                                  fontSize: AdaptiveTextSize()
+                                      .getadaptiveTextSize(context, 10))),
+                        ),
+                        DataCell(
+                          Text(user['game'].toString(),
+                              style: TextStyle(
+                                  fontSize: AdaptiveTextSize()
+                                      .getadaptiveTextSize(context, 10))),
+                        ),
+                        DataCell(
+                          Text(user['favorite'].toString(),
+                              style: TextStyle(
+                                  fontSize: AdaptiveTextSize()
+                                      .getadaptiveTextSize(context, 10))),
+                        ),
+                        DataCell(
+                          Text(user['Status']['state'].toString(),
+                              style: TextStyle(
+                                  fontSize: AdaptiveTextSize()
+                                      .getadaptiveTextSize(context, 10))),
+                        ),
+                      ],
+                    ),
+              ],
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void filter() async {
     await refreshAll();
     if (users == null) {
@@ -535,6 +942,19 @@ class _RegistrationList extends State<RegistrationList> {
           users.removeWhere((user) => user['Status']['state'] == 'On-Hold');
         });
       }
+      if (filterFinished == false) {
+        setState(() {
+          users.removeWhere((user) => user['Status']['state'] == 'Finished');
+        });
+      }
+      for (var user in users) {
+        regPlayers.add(user['username']['Name']);
+        log(regPlayers.toString());
+      }
+      setState(() {
+        regPlayers = regPlayers.toSet().toList();
+      });
+      log(regPlayers.toString());
     }
   }
 
@@ -650,6 +1070,15 @@ class _RegistrationList extends State<RegistrationList> {
         users.removeWhere((user) => user['Status']['state'] == 'Seated');
         users.removeWhere((user) => user['Status']['state'] == 'Cancelled');
         users.removeWhere((user) => user['Status']['state'] == 'On-Hold');
+        users.removeWhere((user) => user['Status']['state'] == 'Finished');
+        for (var user in users) {
+          regPlayers.add(user['username']['Name']);
+          log(regPlayers.toString());
+        }
+        setState(() {
+          regPlayers = regPlayers.toSet().toList();
+        });
+        log(regPlayers.toString());
       }
     });
 
@@ -1136,6 +1565,21 @@ class _RegistrationList extends State<RegistrationList> {
                               ),
                               Row(
                                 children: [
+                                  Text('Finished'),
+                                  Checkbox(
+                                    value: filterFinished,
+                                    onChanged: (value) {
+                                      setState(
+                                        () {
+                                          filterFinished = value;
+                                        },
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ),
+                              Row(
+                                children: [
                                   Text('Cancelled'),
                                   Checkbox(
                                     value: filterCancelled,
@@ -1179,7 +1623,8 @@ class _RegistrationList extends State<RegistrationList> {
               ],
             ),
           ),
-          body: DataTable2(
+          body: body_body(),
+          /*DataTable2(
             columnSpacing: 0,
             horizontalMargin: 20,
             minWidth: 300,
@@ -1559,7 +2004,7 @@ class _RegistrationList extends State<RegistrationList> {
                   ],
                 ),
             ],
-          ),
+          ),*/
           floatingActionButton: FloatingActionButton(
             backgroundColor: Colors.green[800],
             child: Icon(
