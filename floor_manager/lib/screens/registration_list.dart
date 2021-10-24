@@ -22,6 +22,17 @@ class _RegistrationList extends State<RegistrationList> {
   DateTime now = DateTime.now();
   DateTime dateToday;
 
+  bool regNLH2 = false;
+  bool regNLH5 = false;
+  bool regPLO5 = false;
+  bool regPLO10 = false;
+
+  bool filterNLH2fav = false;
+  bool filterNLH5fav = false;
+  bool filterPLO5fav = false;
+  bool filterPLO10fav = false;
+  List regGames = [];
+
   var users = [];
   bool waiting = false;
   bool checkedinlist = false;
@@ -42,10 +53,10 @@ class _RegistrationList extends State<RegistrationList> {
   var gamesList;
   String username;
   final List games = [];
-  var game;
+  var game = 'NLH 2/4';
 
   final List cancels = ['Cancelled by floormanager', 'No Show'];
-  String cancel;
+  String cancel = 'Cancelled by floormanager';
   bool favorite = false;
 
   final List types = ['Registration', 'Waiting'];
@@ -56,7 +67,7 @@ class _RegistrationList extends State<RegistrationList> {
     'Phone',
     'Reception'
   ];
-  String registrated;
+  String registrated = 'Floor Manager';
   final List status = [
     'Pending',
     'Seated',
@@ -64,7 +75,7 @@ class _RegistrationList extends State<RegistrationList> {
     'Cancelled',
     'On-Hold'
   ];
-  String state;
+  String state = 'Pending';
   var players;
   String playerID;
 
@@ -1236,7 +1247,143 @@ class _RegistrationList extends State<RegistrationList> {
                               StatefulBuilder(
                                 builder: (BuildContext context,
                                     StateSetter setState) {
-                                  return DropdownButton<String>(
+                                  return Column(
+                                    children: <Widget>[
+                                      Row(
+                                        children: [
+                                          Text('NLH 2/4'),
+                                          Checkbox(
+                                            value: regNLH2,
+                                            onChanged: (value) {
+                                              setState(
+                                                () {
+                                                  regNLH2 = value;
+                                                },
+                                              );
+                                            },
+                                          ),
+                                          Text('Favorite?'),
+                                          Checkbox(
+                                            value: filterNLH2fav,
+                                            onChanged: (value) {
+                                              setState(
+                                                () {
+                                                  if (regNLH2 == false) {
+                                                    filterNLH2fav = false;
+                                                  } else {
+                                                    filterNLH2fav = value;
+                                                    filterPLO10fav = false;
+                                                    filterNLH5fav = false;
+                                                    filterPLO5fav = false;
+                                                  }
+                                                },
+                                              );
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                      Row(
+                                        children: [
+                                          Text('NLH 5/10'),
+                                          Checkbox(
+                                            value: regNLH5,
+                                            onChanged: (value) {
+                                              setState(
+                                                () {
+                                                  regNLH5 = value;
+                                                },
+                                              );
+                                            },
+                                          ),
+                                          Text('Favorite?'),
+                                          Checkbox(
+                                            value: filterNLH5fav,
+                                            onChanged: (value) {
+                                              setState(
+                                                () {
+                                                  if (regNLH5 == false) {
+                                                    filterNLH5fav = false;
+                                                  } else {
+                                                    filterNLH5fav = value;
+                                                    filterNLH2fav = false;
+                                                    filterPLO10fav = false;
+                                                    filterPLO5fav = false;
+                                                  }
+                                                },
+                                              );
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                      Row(
+                                        children: [
+                                          Text('PLO 5/5'),
+                                          Checkbox(
+                                            value: regPLO5,
+                                            onChanged: (value) {
+                                              setState(
+                                                () {
+                                                  regPLO5 = value;
+                                                },
+                                              );
+                                            },
+                                          ),
+                                          Text('Favorite?'),
+                                          Checkbox(
+                                            value: filterPLO5fav,
+                                            onChanged: (value) {
+                                              setState(
+                                                () {
+                                                  if (regPLO5 == false) {
+                                                    filterPLO5fav = false;
+                                                  } else {
+                                                    filterPLO5fav = value;
+                                                    filterNLH2fav = false;
+                                                    filterNLH5fav = false;
+                                                    filterPLO10fav = false;
+                                                  }
+                                                },
+                                              );
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                      Row(
+                                        children: [
+                                          Text('PLO 10/10'),
+                                          Checkbox(
+                                            value: regPLO10,
+                                            onChanged: (value) {
+                                              setState(
+                                                () {
+                                                  regPLO10 = value;
+                                                },
+                                              );
+                                            },
+                                          ),
+                                          Text('Favorite?'),
+                                          Checkbox(
+                                            value: filterPLO10fav,
+                                            onChanged: (value) {
+                                              setState(
+                                                () {
+                                                  if (regPLO10 == false) {
+                                                    filterPLO10fav = false;
+                                                  } else {
+                                                    filterPLO10fav = value;
+                                                    filterNLH2fav = false;
+                                                    filterNLH5fav = false;
+                                                    filterPLO5fav = false;
+                                                  }
+                                                },
+                                              );
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  );
+                                  /*DropdownButton<String>(
                                     value: (game) ?? 'NLH 2/4',
                                     items: games.map(
                                       (game) {
@@ -1253,27 +1400,7 @@ class _RegistrationList extends State<RegistrationList> {
                                         },
                                       );
                                     },
-                                  );
-                                },
-                              )
-                            ],
-                          ),
-                          Row(
-                            children: [
-                              Text('Favorite?'),
-                              StatefulBuilder(
-                                builder: (BuildContext context,
-                                    StateSetter setState) {
-                                  return Checkbox(
-                                    value: favorite,
-                                    onChanged: (value) {
-                                      setState(
-                                        () {
-                                          favorite = value;
-                                        },
-                                      );
-                                    },
-                                  );
+                                  );*/
                                 },
                               )
                             ],
@@ -1288,7 +1415,7 @@ class _RegistrationList extends State<RegistrationList> {
                                 builder: (BuildContext context,
                                     StateSetter setState) {
                                   return DropdownButton<String>(
-                                    value: (registrated) ?? 'Registrated By',
+                                    value: (registrated) ?? 'Floor Manager',
                                     items: registratedBy.map(
                                       (registrated) {
                                         return DropdownMenuItem<String>(
@@ -1319,7 +1446,7 @@ class _RegistrationList extends State<RegistrationList> {
                                 builder: (BuildContext context,
                                     StateSetter setState) {
                                   return DropdownButton<String>(
-                                    value: (state) ?? 'state',
+                                    value: (state) ?? 'Pending',
                                     items: status.map(
                                       (state) {
                                         return DropdownMenuItem<String>(
@@ -1350,8 +1477,65 @@ class _RegistrationList extends State<RegistrationList> {
                           backgroundColor: Colors.green[800]),
                       child: Text("Submit"),
                       onPressed: () {
-                        playerCreate(_usernameController.text, game,
-                            registrated, state, favorite);
+                        if (regNLH2 == true) {
+                          setState(() {
+                            regGames.add('NLH 2/4');
+                          });
+                        }
+                        if (regNLH5 == true) {
+                          setState(() {
+                            regGames.add('NLH 5/10');
+                          });
+                        }
+                        if (regPLO5 == true) {
+                          setState(() {
+                            regGames.add('PLO 5/5');
+                          });
+                        }
+                        if (regPLO10 == true) {
+                          setState(() {
+                            regGames.add('PLO 10/10');
+                          });
+                        }
+                        for (var game1 in regGames) {
+                          if (game1 == 'NLH 2/4') {
+                            if (filterNLH2fav == true) {
+                              setState(() {
+                                favorite = true;
+                              });
+                            }
+                          }
+
+                          if (game1 == 'NLH 5/10') {
+                            if (filterNLH5fav == true) {
+                              setState(() {
+                                favorite = true;
+                              });
+                            }
+                          }
+                          if (game1 == 'PLO 5/5') {
+                            if (filterPLO5fav == true) {
+                              setState(() {
+                                favorite = true;
+                              });
+                            }
+                          }
+
+                          if (game1 == 'PLO 10/10') {
+                            if (filterPLO10fav == true) {
+                              setState(() {
+                                favorite = true;
+                              });
+                            }
+                          }
+
+                          playerCreate(_usernameController.text, game1,
+                              registrated, state, favorite);
+                          setState(() {
+                            favorite = false;
+                          });
+                        }
+                        regGames.clear();
                         _usernameController.clear();
 
                         setState(() {
@@ -2012,13 +2196,6 @@ class _RegistrationList extends State<RegistrationList> {
               color: Colors.white,
             ),
             onPressed: () {
-              setState(() {
-                game = 'NLH 2/4';
-                favorite = false;
-                registrated = 'Floor Manager';
-                state = 'Pending';
-              });
-
               showDialog(
                 context: context,
                 builder: (BuildContext context) {
@@ -2068,44 +2245,160 @@ class _RegistrationList extends State<RegistrationList> {
                                 StatefulBuilder(
                                   builder: (BuildContext context,
                                       StateSetter setState) {
-                                    return DropdownButton<String>(
-                                      value: (game) ?? 'NLH 2/4',
-                                      items: games.map(
-                                        (game) {
-                                          return DropdownMenuItem<String>(
-                                            value: game,
-                                            child: Text(game),
-                                          );
+                                    return Column(
+                                      children: <Widget>[
+                                        Row(
+                                          children: [
+                                            Text('NLH 2/4'),
+                                            Checkbox(
+                                              value: regNLH2,
+                                              onChanged: (value) {
+                                                setState(
+                                                  () {
+                                                    regNLH2 = value;
+                                                  },
+                                                );
+                                              },
+                                            ),
+                                            Text('Favorite?'),
+                                            Checkbox(
+                                              value: filterNLH2fav,
+                                              onChanged: (value) {
+                                                setState(
+                                                  () {
+                                                    if (regNLH2 == false) {
+                                                      filterNLH2fav = false;
+                                                    } else {
+                                                      filterNLH2fav = value;
+                                                      filterPLO10fav = false;
+                                                      filterNLH5fav = false;
+                                                      filterPLO5fav = false;
+                                                    }
+                                                  },
+                                                );
+                                              },
+                                            ),
+                                          ],
+                                        ),
+                                        Row(
+                                          children: [
+                                            Text('NLH 5/10'),
+                                            Checkbox(
+                                              value: regNLH5,
+                                              onChanged: (value) {
+                                                setState(
+                                                  () {
+                                                    regNLH5 = value;
+                                                  },
+                                                );
+                                              },
+                                            ),
+                                            Text('Favorite?'),
+                                            Checkbox(
+                                              value: filterNLH5fav,
+                                              onChanged: (value) {
+                                                setState(
+                                                  () {
+                                                    if (regNLH5 == false) {
+                                                      filterNLH5fav = false;
+                                                    } else {
+                                                      filterNLH5fav = value;
+                                                      filterNLH2fav = false;
+                                                      filterPLO10fav = false;
+                                                      filterPLO5fav = false;
+                                                    }
+                                                  },
+                                                );
+                                              },
+                                            ),
+                                          ],
+                                        ),
+                                        Row(
+                                          children: [
+                                            Text('PLO 5/5'),
+                                            Checkbox(
+                                              value: regPLO5,
+                                              onChanged: (value) {
+                                                setState(
+                                                  () {
+                                                    regPLO5 = value;
+                                                  },
+                                                );
+                                              },
+                                            ),
+                                            Text('Favorite?'),
+                                            Checkbox(
+                                              value: filterPLO5fav,
+                                              onChanged: (value) {
+                                                setState(
+                                                  () {
+                                                    if (regPLO5 == false) {
+                                                      filterPLO5fav = false;
+                                                    } else {
+                                                      filterPLO5fav = value;
+                                                      filterNLH2fav = false;
+                                                      filterNLH5fav = false;
+                                                      filterPLO10fav = false;
+                                                    }
+                                                  },
+                                                );
+                                              },
+                                            ),
+                                          ],
+                                        ),
+                                        Row(
+                                          children: [
+                                            Text('PLO 10/10'),
+                                            Checkbox(
+                                              value: regPLO10,
+                                              onChanged: (value) {
+                                                setState(
+                                                  () {
+                                                    regPLO10 = value;
+                                                  },
+                                                );
+                                              },
+                                            ),
+                                            Text('Favorite?'),
+                                            Checkbox(
+                                              value: filterPLO10fav,
+                                              onChanged: (value) {
+                                                setState(
+                                                  () {
+                                                    if (regPLO10 == false) {
+                                                      filterPLO10fav = false;
+                                                    } else {
+                                                      filterPLO10fav = value;
+                                                      filterNLH2fav = false;
+                                                      filterNLH5fav = false;
+                                                      filterPLO5fav = false;
+                                                    }
+                                                  },
+                                                );
+                                              },
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    );
+                                    /*DropdownButton<String>(
+                                    value: (game) ?? 'NLH 2/4',
+                                    items: games.map(
+                                      (game) {
+                                        return DropdownMenuItem<String>(
+                                          value: game,
+                                          child: Text(game),
+                                        );
+                                      },
+                                    ).toList(),
+                                    onChanged: (value) {
+                                      setState(
+                                        () {
+                                          game = value;
                                         },
-                                      ).toList(),
-                                      onChanged: (value) {
-                                        setState(
-                                          () {
-                                            game = value;
-                                          },
-                                        );
-                                      },
-                                    );
-                                  },
-                                )
-                              ],
-                            ),
-                            Row(
-                              children: [
-                                Text('Favorite?'),
-                                StatefulBuilder(
-                                  builder: (BuildContext context,
-                                      StateSetter setState) {
-                                    return Checkbox(
-                                      value: favorite,
-                                      onChanged: (value) {
-                                        setState(
-                                          () {
-                                            favorite = value;
-                                          },
-                                        );
-                                      },
-                                    );
+                                      );
+                                    },
+                                  );*/
                                   },
                                 )
                               ],
@@ -2120,7 +2413,7 @@ class _RegistrationList extends State<RegistrationList> {
                                   builder: (BuildContext context,
                                       StateSetter setState) {
                                     return DropdownButton<String>(
-                                      value: (registrated) ?? 'Registrated By',
+                                      value: (registrated) ?? 'Floor Manager',
                                       items: registratedBy.map(
                                         (registrated) {
                                           return DropdownMenuItem<String>(
@@ -2151,7 +2444,7 @@ class _RegistrationList extends State<RegistrationList> {
                                   builder: (BuildContext context,
                                       StateSetter setState) {
                                     return DropdownButton<String>(
-                                      value: (state) ?? 'state',
+                                      value: (state) ?? 'Pending',
                                       items: status.map(
                                         (state) {
                                           return DropdownMenuItem<String>(
@@ -2182,15 +2475,77 @@ class _RegistrationList extends State<RegistrationList> {
                             backgroundColor: Colors.green[800]),
                         child: Text("Submit"),
                         onPressed: () {
-                          playerCreate(_usernameController.text, game,
-                              registrated, state, favorite);
-                          _usernameController.clear();
+                          if (regNLH2 == true) {
+                            setState(() {
+                              regGames.add('NLH 2/4');
+                            });
+                          }
+                          if (regNLH5 == true) {
+                            setState(() {
+                              regGames.add('NLH 5/10');
+                            });
+                          }
+                          if (regPLO5 == true) {
+                            setState(() {
+                              regGames.add('PLO 5/5');
+                            });
+                          }
+                          if (regPLO10 == true) {
+                            setState(() {
+                              regGames.add('PLO 10/10');
+                            });
+                          }
+                          for (var game1 in regGames) {
+                            if (game1 == 'NLH 2/4') {
+                              if (filterNLH2fav == true) {
+                                setState(() {
+                                  favorite = true;
+                                });
+                              }
+                            }
 
+                            if (game1 == 'NLH 5/10') {
+                              if (filterNLH5fav == true) {
+                                setState(() {
+                                  favorite = true;
+                                });
+                              }
+                            }
+                            if (game1 == 'PLO 5/5') {
+                              if (filterPLO5fav == true) {
+                                setState(() {
+                                  favorite = true;
+                                });
+                              }
+                            }
+
+                            if (game1 == 'PLO 10/10') {
+                              if (filterPLO10fav == true) {
+                                setState(() {
+                                  favorite = true;
+                                });
+                              }
+                            }
+
+                            playerCreate(_usernameController.text, game1,
+                                registrated, state, favorite);
+                            setState(() {
+                              favorite = false;
+                            });
+                          }
                           setState(() {
-                            game = 'NLH 2/4';
+                            regNLH2 = false;
+                            regNLH5 = false;
+                            regPLO5 = false;
+                            regPLO10 = false;
+
+                            filterNLH2fav = false;
+                            filterNLH5fav = false;
+                            filterPLO5fav = false;
+                            filterPLO10fav = false;
+                            regGames.clear();
+                            _usernameController.clear();
                             favorite = false;
-                            registrated = 'Registrated By';
-                            state = 'state';
                           });
 
                           Navigator.pop(context);
